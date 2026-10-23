@@ -5,6 +5,7 @@ import {
   isCopyableProxyLink,
   onMount,
   openPrefixColorPickerModal,
+  isUserActivelyScrolling,
   preserveScrollForPage,
   renderOutboundTypeWithPopover,
   resolvePrefixBadgeStyle,
@@ -673,7 +674,7 @@ async function connectToClashSockets(dataUpdatesId: number) {
         Array.isArray(parsedMsg.connections) &&
         expandedSections.has('active_clients')
       ) {
-        renderConnectionsWidget();
+        scheduleConnectionsWidgetRender();
       }
     },
     (_err) => {
@@ -1935,12 +1936,30 @@ function updateLatencyProgressInline(
 
 // Renderer
 
+let sectionsRenderFrame: number | null = null;
+function scheduleSectionsWidgetRender() {
+  if (sectionsRenderFrame !== null) return;
+  const schedule =
+    typeof requestAnimationFrame !== 'undefined'
+      ? requestAnimationFrame
+      : (cb: () => void) => setTimeout(cb, 16);
+  sectionsRenderFrame = schedule(() => {
+    sectionsRenderFrame = null;
+    void renderSectionsWidget();
+  }) as unknown as number;
+}
+
 async function renderSectionsWidget() {
   logger.debug('[DASHBOARD]', 'renderSectionsWidget');
   const sectionsWidget = store.get().sectionsWidget;
   const container = document.getElementById('dashboard-sections-grid');
 
   if (!container) {
+    return;
+  }
+
+  if (isUserActivelyScrolling()) {
+    scheduleSectionsWidgetRender();
     return;
   }
 
@@ -2338,12 +2357,30 @@ async function fetchConnections() {
   } catch (_e) {
     // Ignore connections fetch errors
   }
-  renderConnectionsWidget();
+  scheduleConnectionsWidgetRender();
+}
+
+let connectionsRenderFrame: number | null = null;
+function scheduleConnectionsWidgetRender() {
+  if (connectionsRenderFrame !== null) return;
+  const schedule =
+    typeof requestAnimationFrame !== 'undefined'
+      ? requestAnimationFrame
+      : (cb: () => void) => setTimeout(cb, 16);
+  connectionsRenderFrame = schedule(() => {
+    connectionsRenderFrame = null;
+    renderConnectionsWidget();
+  }) as unknown as number;
 }
 
 function renderConnectionsWidget() {
   const container = document.getElementById('dashboard-connections-grid');
   if (!container) return;
+
+  if (isUserActivelyScrolling()) {
+    scheduleConnectionsWidgetRender();
+    return;
+  }
 
   preserveScrollForPage(() => {
     container.replaceChildren(
@@ -2469,6 +2506,145 @@ export async function renderSectionDashboardWidgets() {
 
   const totalProxySections = routesToRender.length;
 
+  // Check if we can update existing cards in-place without touching DOM tree
+  const existingCards = Array.from(
+    container.querySelectorAll<HTMLElement>('[data-section-card]'),
+  );
+  const existingNames = existingCards.map((c) =>
+    c.getAttribute('data-section-card'),
+  );
+  const newNames = routesToRender.map((r) => r.sectionName || 'main');
+
+  const canUpdateInPlace =
+    existingCards.length > 0 &&
+    existingCards.length === routesToRender.length &&
+    existingNames.every((name, i) => name === newNames[i]) &&
+    !loading &&
+    !failed;
+
+  if (canUpdateInPlace) {
+    routesToRender.forEach((route, idx) => {
+      const card = existingCards[idx];
+      const sectionName = route.sectionName || 'main';
+      const stats = getSectionConnectionStats(
+        sectionName,
+        totalProxySections,
+        lastRawConnections,
+        {
+          downloadTotal: total.downloadTotal,
+          uploadTotal: total.uploadTotal,
+          downSpeed: bandwidth.down,
+          upSpeed: bandwidth.up,
+        },
+      );
+
+      const downPill = card.querySelector<HTMLElement>(
+        '[data-metric="down-speed"]',
+      );
+      if (downPill) {
+        const nextText = `↓ ${prettyBytes(stats.downSpeed)}/s`;
+        if (downPill.textContent !== nextText) downPill.textContent = nextText;
+      }
+
+      const upPill = card.querySelector<HTMLElement>(
+        '[data-metric="up-speed"]',
+      );
+      if (upPill) {
+        const nextText = `↑ ${prettyBytes(stats.upSpeed)}/s`;
+        if (upPill.textContent !== nextText) upPill.textContent = nextText;
+      }
+
+      const sDownPill = card.querySelector<HTMLElement>(
+        '[data-metric="session-down"]',
+      );
+      if (sDownPill) {
+        const nextText = `↓ ${prettyBytes(stats.download || 0)}`;
+        if (sDownPill.textContent !== nextText)
+          sDownPill.textContent = nextText;
+      }
+
+      const sUpPill = card.querySelector<HTMLElement>(
+        '[data-metric="session-up"]',
+      );
+      if (sUpPill) {
+        const nextText = `↑ ${prettyBytes(stats.upload || 0)}`;
+        if (sUpPill.textContent !== nextText) sUpPill.textContent = nextText;
+      }
+
+      const connsPill = card.querySelector<HTMLElement>(
+        '[data-metric="conns"]',
+      );
+      if (connsPill) {
+        const nextText = `${stats.conns} ${tr('соед.', 'conns')}`;
+        if (connsPill.textContent !== nextText)
+          connsPill.textContent = nextText;
+      }
+
+      const latencyPill = card.querySelector<HTMLElement>(
+        '[data-metric="latency"]',
+      );
+      if (latencyPill) {
+        const latencyClass =
+          route.latency > 0
+            ? route.latency <= 150
+              ? 'tachyon-latency-pill tachyon-latency-pill--fast'
+              : route.latency <= 300
+                ? 'tachyon-latency-pill tachyon-latency-pill--medium'
+                : 'tachyon-latency-pill tachyon-latency-pill--slow'
+            : 'tachyon-latency-pill tachyon-latency-pill--neutral';
+        const latencyText =
+          route.latency > 0
+            ? `${route.latency}ms`
+            : isCheckingLatency
+              ? tr('Проверка...', 'Checking...')
+              : '—';
+        if (latencyPill.textContent !== latencyText)
+          latencyPill.textContent = latencyText;
+        if (latencyPill.className !== latencyClass)
+          latencyPill.className = latencyClass;
+      }
+
+      const serverEl = card.querySelector<HTMLElement>(
+        '[data-metric="server"]',
+      );
+      if (serverEl) {
+        if (serverEl.getAttribute('data-server-name') !== route.name) {
+          serverEl.setAttribute('data-server-name', route.name);
+          serverEl.replaceChildren(
+            ...renderFlagEmojis(
+              ensureOutboundDisplayFlag({ displayName: route.name }),
+            ),
+          );
+        }
+      }
+
+      const selectorEl = card.querySelector<HTMLElement>(
+        '[data-metric="selector"]',
+      );
+      if (selectorEl && selectorEl.textContent !== route.selector) {
+        selectorEl.textContent = route.selector;
+      }
+
+      const protoEl = card.querySelector<HTMLElement>(
+        '[data-metric="protocol"]',
+      );
+      if (protoEl) {
+        const protoText = route.type || '—';
+        if (protoEl.textContent !== protoText) protoEl.textContent = protoText;
+        const protoClass =
+          route.type && route.type !== '—' ? 'tachyon-protocol-pill' : '';
+        if (protoEl.className !== protoClass) protoEl.className = protoClass;
+      }
+    });
+    return;
+  }
+
+  // If full DOM re-creation is required, defer while user is actively scrolling
+  if (isUserActivelyScrolling()) {
+    scheduleSectionDashboardWidgetsRender();
+    return;
+  }
+
   const widgets = routesToRender.map((route) => {
     const sectionName = route.sectionName || 'main';
     const sectionDisplayName = route.sectionDisplayName || sectionName;
@@ -2495,21 +2671,40 @@ export async function renderSectionDashboardWidgets() {
 
     const latencyValue =
       route.latency > 0
-        ? E('span', { class: latencyClass }, `${route.latency}ms`)
+        ? E(
+            'span',
+            { class: latencyClass, 'data-metric': 'latency' } as any,
+            `${route.latency}ms`,
+          )
         : isCheckingLatency
-          ? E('span', { class: latencyClass }, tr('Проверка...', 'Checking...'))
-          : E('span', { class: latencyClass }, '—');
+          ? E(
+              'span',
+              { class: latencyClass, 'data-metric': 'latency' } as any,
+              tr('Проверка...', 'Checking...'),
+            )
+          : E(
+              'span',
+              { class: latencyClass, 'data-metric': 'latency' } as any,
+              '—',
+            );
 
     const routeItems = [
       {
         key: tr('Сервер', 'Server'),
-        value: renderFlagEmojis(
-          ensureOutboundDisplayFlag({ displayName: route.name }),
+        value: E(
+          'span',
+          {
+            'data-metric': 'server',
+            'data-server-name': route.name,
+          } as any,
+          renderFlagEmojis(
+            ensureOutboundDisplayFlag({ displayName: route.name }),
+          ),
         ),
       },
       {
         key: tr('Селектор', 'Selector'),
-        value: route.selector,
+        value: E('span', { 'data-metric': 'selector' } as any, route.selector),
       },
       {
         key: tr('Задержка', 'Latency'),
@@ -2519,8 +2714,15 @@ export async function renderSectionDashboardWidgets() {
         key: tr('Протокол', 'Protocol'),
         value:
           route.type && route.type !== '—'
-            ? E('span', { class: 'tachyon-protocol-pill' }, route.type)
-            : '—',
+            ? E(
+                'span',
+                {
+                  class: 'tachyon-protocol-pill',
+                  'data-metric': 'protocol',
+                } as any,
+                route.type,
+              )
+            : E('span', { 'data-metric': 'protocol' } as any, '—'),
       },
     ];
 
@@ -2529,7 +2731,10 @@ export async function renderSectionDashboardWidgets() {
         key: tr('Входящий', 'Downlink'),
         value: E(
           'span',
-          { class: 'tachyon-stat-pill tachyon-stat-pill--down' },
+          {
+            class: 'tachyon-stat-pill tachyon-stat-pill--down',
+            'data-metric': 'down-speed',
+          } as any,
           `↓ ${prettyBytes(stats.downSpeed)}/s`,
         ),
       },
@@ -2537,7 +2742,10 @@ export async function renderSectionDashboardWidgets() {
         key: tr('Исходящий', 'Uplink'),
         value: E(
           'span',
-          { class: 'tachyon-stat-pill tachyon-stat-pill--up' },
+          {
+            class: 'tachyon-stat-pill tachyon-stat-pill--up',
+            'data-metric': 'up-speed',
+          } as any,
           `↑ ${prettyBytes(stats.upSpeed)}/s`,
         ),
       },
@@ -2549,12 +2757,18 @@ export async function renderSectionDashboardWidgets() {
         value: E('span', { class: 'tachyon-stat--session' }, [
           E(
             'span',
-            { class: 'tachyon-traffic-pill tachyon-traffic-pill--down' },
+            {
+              class: 'tachyon-traffic-pill tachyon-traffic-pill--down',
+              'data-metric': 'session-down',
+            } as any,
             `↓ ${prettyBytes(stats.download || 0)}`,
           ),
           E(
             'span',
-            { class: 'tachyon-traffic-pill tachyon-traffic-pill--up' },
+            {
+              class: 'tachyon-traffic-pill tachyon-traffic-pill--up',
+              'data-metric': 'session-up',
+            } as any,
             `↑ ${prettyBytes(stats.upload || 0)}`,
           ),
         ]),
@@ -2563,7 +2777,10 @@ export async function renderSectionDashboardWidgets() {
         key: tr('Соединения', 'Connections'),
         value: E(
           'span',
-          { class: 'tachyon-stat-pill tachyon-stat-pill--conns' },
+          {
+            class: 'tachyon-stat-pill tachyon-stat-pill--conns',
+            'data-metric': 'conns',
+          } as any,
           `${stats.conns} ${tr('соед.', 'conns')}`,
         ),
       },
@@ -2574,6 +2791,9 @@ export async function renderSectionDashboardWidgets() {
       failed,
       title: `${tr('Секция', 'Section')}: ${sectionDisplayName}`,
       badge: tr('Активна', 'Active'),
+      attributes: {
+        'data-section-card': sectionName,
+      },
       columns: [
         {
           title: tr('Активный маршрут', 'Active Route'),
@@ -2595,6 +2815,11 @@ export async function renderSectionDashboardWidgets() {
 export async function renderSystemServicesWidget() {
   const container = document.getElementById('dashboard-widget-system-services');
   if (!container) return;
+
+  if (isUserActivelyScrolling()) {
+    scheduleSystemServicesWidgetRender();
+    return;
+  }
 
   const sysState = store.get().systemInfoWidget;
   const srvState = store.get().servicesInfoWidget;
@@ -3140,8 +3365,16 @@ async function onStoreUpdate(
       ) && updateLatencyProgressInline(next.sectionsWidget);
 
     if (!inlineUpdated) {
-      renderSectionsWidget();
-      renderTrafficTotalWidget();
+      const dataChanged =
+        prev.sectionsWidget.loading !== next.sectionsWidget.loading ||
+        prev.sectionsWidget.failed !== next.sectionsWidget.failed ||
+        JSON.stringify(prev.sectionsWidget.data) !==
+          JSON.stringify(next.sectionsWidget.data);
+
+      if (dataChanged) {
+        scheduleSectionsWidgetRender();
+        renderTrafficTotalWidget();
+      }
     }
   }
 
@@ -3222,6 +3455,22 @@ function onPageUnmount() {
       clearTimeout(systemServicesRenderFrame);
     }
     systemServicesRenderFrame = null;
+  }
+  if (connectionsRenderFrame !== null) {
+    if (typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(connectionsRenderFrame);
+    } else {
+      clearTimeout(connectionsRenderFrame);
+    }
+    connectionsRenderFrame = null;
+  }
+  if (sectionsRenderFrame !== null) {
+    if (typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(sectionsRenderFrame);
+    } else {
+      clearTimeout(sectionsRenderFrame);
+    }
+    sectionsRenderFrame = null;
   }
 
   stopDashboardDataUpdates();

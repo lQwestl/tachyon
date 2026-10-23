@@ -72,19 +72,39 @@ const scheduleFrame = (cb: () => void) => {
   return setTimeout(cb, 16);
 };
 
+function getScrollPosition(): {
+  target: Window | HTMLElement | null;
+  top: number;
+} {
+  if (typeof window === 'undefined') {
+    return { target: null, top: 0 };
+  }
+  const mainContent =
+    typeof document !== 'undefined' &&
+    typeof document.getElementById === 'function'
+      ? document.getElementById('maincontent')
+      : null;
+  if (mainContent && mainContent.scrollTop > 0) {
+    return { target: mainContent, top: mainContent.scrollTop };
+  }
+  const winTop =
+    window.scrollY ??
+    window.pageYOffset ??
+    document.documentElement?.scrollTop ??
+    0;
+  if (winTop > 0 || !mainContent) {
+    return { target: window, top: winTop };
+  }
+  return { target: mainContent, top: 0 };
+}
+
 export function preserveScrollForPage(
   renderFn: () => void,
   targetContainer?: HTMLElement | null,
 ) {
   ensureUserScrollTracking();
 
-  const scrollY =
-    typeof window !== 'undefined'
-      ? (window.scrollY ??
-        window.pageYOffset ??
-        document.documentElement?.scrollTop ??
-        0)
-      : 0;
+  const pos = getScrollPosition();
 
   const root =
     typeof document !== 'undefined' ? document.documentElement : null;
@@ -124,7 +144,7 @@ export function preserveScrollForPage(
       }
     }
 
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || !pos.target) {
       return;
     }
 
@@ -133,16 +153,16 @@ export function preserveScrollForPage(
       return;
     }
 
-    const currentScrollY =
-      window.scrollY ??
-      window.pageYOffset ??
-      document.documentElement?.scrollTop ??
-      0;
+    const currentPos = getScrollPosition();
 
     // Only restore if layout shift caused the scroll position to jump
-    if (Math.abs(currentScrollY - scrollY) > 2) {
+    if (Math.abs(currentPos.top - pos.top) > 2) {
       isProgrammaticScroll = true;
-      window.scrollTo({ top: scrollY });
+      if (pos.target === window) {
+        window.scrollTo({ top: pos.top });
+      } else if ('scrollTop' in pos.target) {
+        (pos.target as HTMLElement).scrollTop = pos.top;
+      }
       scheduleFrame(() => {
         isProgrammaticScroll = false;
       });
