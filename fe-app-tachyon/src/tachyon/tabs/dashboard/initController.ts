@@ -2015,7 +2015,7 @@ async function renderSectionsWidget() {
 
     return preserveScrollForPage(() => {
       container.replaceChildren(renderedWidget);
-    });
+    }, container);
   }
 
   const hasTestableSections = sectionsWithCustomLatencies.some(
@@ -2200,7 +2200,7 @@ async function renderSectionsWidget() {
       ...(testAllHeader ? [testAllHeader] : []),
       ...renderedWidgets,
     );
-  });
+  }, container);
 }
 
 function renderStoreWidget(
@@ -2235,7 +2235,9 @@ function renderStoreWidget(
       title: '',
       items: [],
     });
-    return container.replaceChildren(renderedWidget);
+    return preserveScrollForPage(() => {
+      container.replaceChildren(renderedWidget);
+    }, container);
   }
 
   const renderedWidget = renderWidget({
@@ -2244,7 +2246,9 @@ function renderStoreWidget(
     title: title,
     items: getItems(widgetState.data),
   });
-  container.replaceChildren(renderedWidget);
+  preserveScrollForPage(() => {
+    container.replaceChildren(renderedWidget);
+  }, container);
 }
 
 async function fetchConnections() {
@@ -2341,14 +2345,16 @@ function renderConnectionsWidget() {
   const container = document.getElementById('dashboard-connections-grid');
   if (!container) return;
 
-  container.replaceChildren(
-    renderConnections(
-      currentConnections,
-      !expandedSections.has('active_clients'),
-      () => toggleSectionExpanded('active_clients'),
-      currentTopDomains,
-    ),
-  );
+  preserveScrollForPage(() => {
+    container.replaceChildren(
+      renderConnections(
+        currentConnections,
+        !expandedSections.has('active_clients'),
+        () => toggleSectionExpanded('active_clients'),
+        currentTopDomains,
+      ),
+    );
+  }, container);
 }
 
 export function getSectionConnectionStats(
@@ -2581,7 +2587,9 @@ export async function renderSectionDashboardWidgets() {
     });
   });
 
-  container.replaceChildren(...widgets);
+  preserveScrollForPage(() => {
+    container.replaceChildren(...widgets);
+  }, container);
 }
 
 export async function renderSystemServicesWidget() {
@@ -2752,23 +2760,51 @@ export async function renderSystemServicesWidget() {
     ],
   });
 
-  container.replaceChildren(widget);
+  preserveScrollForPage(() => {
+    container.replaceChildren(widget);
+  }, container);
+}
+
+let sectionWidgetsRenderFrame: number | null = null;
+function scheduleSectionDashboardWidgetsRender() {
+  if (sectionWidgetsRenderFrame !== null) return;
+  const schedule =
+    typeof requestAnimationFrame !== 'undefined'
+      ? requestAnimationFrame
+      : (cb: () => void) => setTimeout(cb, 16);
+  sectionWidgetsRenderFrame = schedule(() => {
+    sectionWidgetsRenderFrame = null;
+    void renderSectionDashboardWidgets();
+  }) as unknown as number;
+}
+
+let systemServicesRenderFrame: number | null = null;
+function scheduleSystemServicesWidgetRender() {
+  if (systemServicesRenderFrame !== null) return;
+  const schedule =
+    typeof requestAnimationFrame !== 'undefined'
+      ? requestAnimationFrame
+      : (cb: () => void) => setTimeout(cb, 16);
+  systemServicesRenderFrame = schedule(() => {
+    systemServicesRenderFrame = null;
+    void renderSystemServicesWidget();
+  }) as unknown as number;
 }
 
 async function renderBandwidthWidget() {
-  void renderSectionDashboardWidgets();
+  scheduleSectionDashboardWidgetsRender();
 }
 
 async function renderTrafficTotalWidget() {
-  void renderSectionDashboardWidgets();
+  scheduleSectionDashboardWidgetsRender();
 }
 
 async function renderSystemInfoWidget() {
-  void renderSystemServicesWidget();
+  scheduleSystemServicesWidgetRender();
 }
 
 async function renderServicesInfoWidget() {
-  void renderSystemServicesWidget();
+  scheduleSystemServicesWidgetRender();
 }
 
 export function formatServiceRowValue(options: {
@@ -3109,22 +3145,15 @@ async function onStoreUpdate(
     }
   }
 
-  if (diff.bandwidthWidget) {
-    renderBandwidthWidget();
+  if (diff.bandwidthWidget || diff.trafficTotalWidget) {
+    scheduleSectionDashboardWidgetsRender();
   }
 
-  if (diff.trafficTotalWidget) {
-    renderTrafficTotalWidget();
-    renderBandwidthWidget();
-  }
-
-  if (diff.systemInfoWidget) {
-    renderSystemInfoWidget();
-  }
-
-  if (diff.servicesInfoWidget) {
-    syncDashboardServiceAvailability();
-    renderServicesInfoWidget();
+  if (diff.systemInfoWidget || diff.servicesInfoWidget) {
+    if (diff.servicesInfoWidget) {
+      syncDashboardServiceAvailability();
+    }
+    scheduleSystemServicesWidgetRender();
   }
 
   if (diff.tailscaleWidget) {
@@ -3177,6 +3206,23 @@ function onPageUnmount() {
 
   directSocketsFailed = false;
   trafficRatesState = createInitialTrafficRatesState();
+
+  if (sectionWidgetsRenderFrame !== null) {
+    if (typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(sectionWidgetsRenderFrame);
+    } else {
+      clearTimeout(sectionWidgetsRenderFrame);
+    }
+    sectionWidgetsRenderFrame = null;
+  }
+  if (systemServicesRenderFrame !== null) {
+    if (typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(systemServicesRenderFrame);
+    } else {
+      clearTimeout(systemServicesRenderFrame);
+    }
+    systemServicesRenderFrame = null;
+  }
 
   stopDashboardDataUpdates();
   stopActionStateWatcher();
