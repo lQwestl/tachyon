@@ -3011,7 +3011,7 @@ function build_inverted_subrules(config, section_name, inverted_conditions) {
         add_domain_array(sub, "domain_suffix", ndom.domain_suffix);
         add_domain_array(sub, "domain_keyword", ndom.domain_keyword);
         add_domain_array(sub, "domain_regex", ndom.domain_regex);
-        let nip = legacy_condition_values(neg, "ip_cidr");
+        let nip = core_ip.normalize_to_cidrs(legacy_condition_values(neg, "ip_cidr"));
         if (length(nip) > 0)
             sub.ip_cidr = single_or_array(nip);
         let nsrc_raw = [];
@@ -3052,7 +3052,7 @@ function add_combined_route_for_clause(config, section) {
     let domain_suffix = domains.domain_suffix;
     let domain_keyword = domains.domain_keyword;
     let domain_regex = domains.domain_regex;
-    let ip_cidr = legacy_condition_values(section, "ip_cidr");
+    let ip_cidr = core_ip.normalize_to_cidrs(legacy_condition_values(section, "ip_cidr"));
     let source_ip_cidr = core_ip.normalize_to_cidrs(legacy_condition_values(section, "source_ip_cidr"));
     let excluded_cidrs = core_ip.normalize_to_cidrs(list_option(section, "excluded_ips"));
     let rule_set_tags = [];
@@ -3690,8 +3690,7 @@ function add_service_route_rules(config, sections) {
     let candidates = failover_candidate(sections);
     let proxy_candidates = [];
     for (let section in candidates) {
-        let act = option(section, "action", "");
-        if (connections.is_remote_proxy_action(act))
+        if (connections.is_remote_proxy_section ? connections.is_remote_proxy_section(section) : connections.is_remote_proxy_action(option(section, "action", "")))
             push(proxy_candidates, section);
     }
     let target_candidates = length(proxy_candidates) > 0 ? proxy_candidates : candidates;
@@ -3750,6 +3749,7 @@ function add_full_tunnel_route_rule(config, sections) {
     }
     if (full_tunnel_target == "" || !is_valid_detour(config, full_tunnel_target)) {
         full_tunnel_target = "";
+        let fallback_dpi_target = "";
         for (let section in sections) {
             if (!section_enabled(section))
                 continue;
@@ -3759,11 +3759,18 @@ function add_full_tunnel_route_rule(config, sections) {
             if (connections.is_connections_action(action) || action == "awg" || action == "fptn" || action == "group") {
                 let cand_tag = group_outbound_tag_for_section(section) || outbound_tag(section[".name"]);
                 if (is_valid_detour(config, cand_tag)) {
-                    full_tunnel_target = cand_tag;
-                    break;
+                    if (connections.is_dpi_or_desync_only_section && connections.is_dpi_or_desync_only_section(section)) {
+                        if (fallback_dpi_target == "")
+                            fallback_dpi_target = cand_tag;
+                    } else {
+                        full_tunnel_target = cand_tag;
+                        break;
+                    }
                 }
             }
         }
+        if (full_tunnel_target == "" && fallback_dpi_target != "")
+            full_tunnel_target = fallback_dpi_target;
     }
     if (full_tunnel_target != "" && is_valid_detour(config, full_tunnel_target)) {
         push_section_route_rule(config, {

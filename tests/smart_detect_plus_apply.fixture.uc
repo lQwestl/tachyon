@@ -16,6 +16,7 @@ let cursor={
 let uci_core={cursor:function(){return cursor;},get_all:function(config,name){return values[name]||{};}};
 let smart_detect={probe_status:function(){reloads++;return reload_ok?0:1;}};
 let common={object_or_empty:function(v){return v||{};}};
+function get_connections(){return null;}
 function log_message(msg,lvl){}
 let notifications=[];
 let notification_entries=[];
@@ -70,4 +71,12 @@ conflict=true;
 check(length(smart_detect_apply_domains([{section:"vpn",domain:"pending.example"}]))==0&&index(values.vpn.user_domains,"pending.example")<0,"Default defers pending UI changes");
 conflict=false;values.settings.smart_detect_exclude_lists=["unknown"];
 check(length(smart_detect_apply_domains([{section:"vpn",domain:"missing.example"}]))==0,"Default final write waits for missing preset cache");
+values={settings:{smart_detect:"1",smart_detect_mode:"plus"},grp:{action:"group",enabled:"1",group_members:["vpn"],user_domains:["existing.example"]}};
+previous_commits=commits;previous_reloads=reloads;
+check(length(smart_detect_apply_plus_domains([{section:"grp",domain:"grouped.example",source_domain:"sub.grouped.example"}]))==1,"Plus writes detected domain to group section user_domains");
+check(commits==previous_commits+1&&reloads==previous_reloads+1&&index(values.grp.user_domains,"grouped.example")>=0,"Plus commits and reloads group section user_domains");
+values={settings:{smart_detect:"1",smart_detect_mode:"default"},grp:{action:"group",enabled:"1",group_members:["vpn"],user_domains:["existing.example"]}};
+previous_commits=commits;previous_reloads=reloads;
+check(length(smart_detect_apply_domains([{section:"grp",domain:"default-group.example"}]))==1,"Default writes detected domain to group section user_domains");
+check(commits==previous_commits+1&&reloads==previous_reloads+1&&index(values.grp.user_domains,"default-group.example")>=0,"Default commits and reloads group section user_domains");
 print(sprintf("PASS: %d actual-function Smart Detect UCI checks\n",checks));
