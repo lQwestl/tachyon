@@ -52,40 +52,58 @@ export function getGroupActiveRoute(
 
   if (selected.priorityInfo) {
     const selName = selected.priorityInfo.selectedName;
+    const selCode = selected.priorityInfo.selectedCode;
     const member =
       selected.priorityInfo.outbounds?.find(
         (m) =>
           m.selected ||
-          m.displayName === selName ||
-          m.code === selected.priorityInfo?.selectedCode,
-      ) || group.outbounds.find((o) => o.displayName === selName);
+          (selName && m.displayName === selName) ||
+          (selCode && m.code === selCode) ||
+          (selName && m.displayName && m.displayName.includes(selName)),
+      ) || group.outbounds.find((o) => (selName && o.displayName === selName) || (selCode && o.code === selCode));
+
+    const lat =
+      member?.latency && member.latency > 0
+        ? member.latency
+        : selected.latency && selected.latency > 0
+          ? selected.latency
+          : (member?.latency ?? selected.latency ?? -1);
 
     return {
       sectionName,
       sectionDisplayName,
       name: selName || member?.displayName || selected.displayName,
       selector: `${selected.displayName} (Priority)`,
-      latency: member?.latency ?? -1,
+      latency: lat,
       type: member?.type || 'Priority',
     };
   }
 
   if (selected.urlTestInfo) {
     const selName = selected.urlTestInfo.selectedName;
+    const selCode = selected.urlTestInfo.selectedCode;
     const member =
       selected.urlTestInfo.outbounds?.find(
         (m) =>
           m.selected ||
-          m.displayName === selName ||
-          m.code === selected.urlTestInfo?.selectedCode,
-      ) || group.outbounds.find((o) => o.displayName === selName);
+          (selName && m.displayName === selName) ||
+          (selCode && m.code === selCode) ||
+          (selName && m.displayName && m.displayName.includes(selName)),
+      ) || group.outbounds.find((o) => (selName && o.displayName === selName) || (selCode && o.code === selCode));
+
+    const lat =
+      member?.latency && member.latency > 0
+        ? member.latency
+        : selected.latency && selected.latency > 0
+          ? selected.latency
+          : (member?.latency ?? selected.latency ?? -1);
 
     return {
       sectionName,
       sectionDisplayName,
       name: selName || member?.displayName || selected.displayName,
       selector: `${selected.displayName} (URLTest)`,
-      latency: member?.latency ?? -1,
+      latency: lat,
       type: member?.type || 'URLTest',
     };
   }

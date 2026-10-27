@@ -2531,6 +2531,15 @@ async function renderSectionsWidget() {
       { class: 'tachyon_sections-tabs-bar' },
       proxySections.map((s) => {
         const isActive = s.code === activeSectionTabCode;
+        const secLower = (s.sectionName || '').toLowerCase();
+        const tabIcon = secLower.includes('gosuslugi')
+          ? '🏛️'
+          : secLower.includes('youtube') || secLower.includes('discord')
+          ? '🎬'
+          : secLower.includes('media') || secLower.includes('video')
+          ? '📺'
+          : '🌐';
+
         return E(
           'button',
           {
@@ -2543,6 +2552,7 @@ async function renderSectionsWidget() {
             },
           },
           [
+            E('span', { class: 'tachyon_sections-tab__icon' }, tabIcon),
             E(
               'span',
               { class: 'tachyon_sections-tab__text' },
@@ -3073,6 +3083,24 @@ export function getSectionConnectionStats(
   };
 }
 
+function resolveCustomLatency(
+  code?: string,
+  name?: string,
+  displayName?: string,
+  fallback?: number,
+): number | undefined {
+  if (code && customProxyLatencies.has(code)) {
+    return customProxyLatencies.get(code);
+  }
+  if (name && customProxyLatencies.has(name)) {
+    return customProxyLatencies.get(name);
+  }
+  if (displayName && customProxyLatencies.has(displayName)) {
+    return customProxyLatencies.get(displayName);
+  }
+  return fallback;
+}
+
 export async function renderSectionDashboardWidgets() {
   const container = document.getElementById('dashboard-widgets-sections-list');
   if (!container) return;
@@ -3081,7 +3109,12 @@ export async function renderSectionDashboardWidgets() {
   const sectionsWithCustomLatencies = sectionsWidget.data.map((section) => ({
     ...section,
     outbounds: section.outbounds.map((outbound) => {
-      const customLatency = customProxyLatencies.get(outbound.code);
+      const customLatency = resolveCustomLatency(
+        outbound.code,
+        (outbound as any).name,
+        outbound.displayName,
+        outbound.latency,
+      );
       return {
         ...outbound,
         latency: customLatency ?? outbound.latency,
@@ -3091,7 +3124,12 @@ export async function renderSectionDashboardWidgets() {
               outbounds: outbound.urlTestInfo.outbounds.map((member) => ({
                 ...member,
                 latency:
-                  customProxyLatencies.get(member.code) ?? member.latency,
+                  resolveCustomLatency(
+                    member.code,
+                    (member as any).name,
+                    member.displayName,
+                    member.latency,
+                  ) ?? member.latency,
               })),
             }
           : undefined,
@@ -3101,7 +3139,12 @@ export async function renderSectionDashboardWidgets() {
               outbounds: outbound.priorityInfo.outbounds.map((member) => ({
                 ...member,
                 latency:
-                  customProxyLatencies.get(member.code) ?? member.latency,
+                  resolveCustomLatency(
+                    member.code,
+                    (member as any).name,
+                    member.displayName,
+                    member.latency,
+                  ) ?? member.latency,
               })),
             }
           : undefined,
@@ -4004,7 +4047,12 @@ export function renderHeroAndKpiWidgets() {
     (section) => ({
       ...section,
       outbounds: (section.outbounds || []).map((outbound) => {
-        const customLatency = customProxyLatencies.get(outbound.code);
+        const customLatency = resolveCustomLatency(
+          outbound.code,
+          (outbound as any).name,
+          outbound.displayName,
+          outbound.latency,
+        );
         return {
           ...outbound,
           latency: customLatency ?? outbound.latency,
@@ -4014,7 +4062,12 @@ export function renderHeroAndKpiWidgets() {
                 outbounds: outbound.urlTestInfo.outbounds.map((member) => ({
                   ...member,
                   latency:
-                    customProxyLatencies.get(member.code) ?? member.latency,
+                    resolveCustomLatency(
+                      member.code,
+                      (member as any).name,
+                      member.displayName,
+                      member.latency,
+                    ) ?? member.latency,
                 })),
               }
             : undefined,
@@ -4024,7 +4077,12 @@ export function renderHeroAndKpiWidgets() {
                 outbounds: outbound.priorityInfo.outbounds.map((member) => ({
                   ...member,
                   latency:
-                    customProxyLatencies.get(member.code) ?? member.latency,
+                    resolveCustomLatency(
+                      member.code,
+                      (member as any).name,
+                      member.displayName,
+                      member.latency,
+                    ) ?? member.latency,
                 })),
               }
             : undefined,
@@ -4034,6 +4092,24 @@ export function renderHeroAndKpiWidgets() {
   );
 
   const activeRoutes = getAllActiveRoutes(sectionsWithCustomLatencies);
+
+  // Trigger background latency test for any active route that lacks a ping
+  if (dashboardMounted && !isTestingAllSections) {
+    for (const r of activeRoutes) {
+      const nodeTag = r.name;
+      const key = `${r.sectionName || 'main'}:${nodeTag}`;
+      if (
+        (r.latency == null || r.latency <= 0) &&
+        nodeTag &&
+        r.type?.toLowerCase() !== 'direct' &&
+        !customProxyLatencies.has(key)
+      ) {
+        customProxyLatencies.set(key, -1);
+        void handleTestLatency('proxy', r.sectionName || 'main', nodeTag);
+      }
+    }
+  }
+
   const mappedRoutes = activeRoutes.map((r) => {
     const rRawName = r.name || '';
     const rCountryInfo = rRawName

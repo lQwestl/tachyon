@@ -3375,57 +3375,54 @@ body.dark-theme .tachyon_proto-popover__desc {
 
 /* Horizontal Sections Tabs Bar (Matching Mockup) */
 .tachyon_sections-tabs-bar {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 0 0 10px 0 !important;
-    margin-bottom: 12px;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 2px 0 14px 0 !important;
+    margin-bottom: 14px !important;
     background: transparent !important;
     border: none !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 0 !important;
-    overflow-x: auto;
-    scrollbar-width: thin;
-    box-sizing: border-box;
+    overflow-x: auto !important;
+    scrollbar-width: thin !important;
+    box-sizing: border-box !important;
 }
 
 .tachyon_sections-tab {
-    position: relative;
-    appearance: none;
-    -webkit-appearance: none;
-    background: transparent !important;
-    border: none !important;
-    outline: none;
-    padding: 6px 2px 10px 2px !important;
-    border-radius: 0 !important;
-    font-size: 14px;
-    font-weight: 600;
+    position: relative !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    outline: none !important;
+    padding: 7px 16px !important;
+    border-radius: 9px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
     color: var(--text-color-medium, #94a3b8) !important;
-    cursor: pointer;
-    transition: color 0.15s ease;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }
 
 .tachyon_sections-tab:hover {
-    color: var(--text-color-high, #f8fafc) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #f8fafc !important;
 }
 
 .tachyon_sections-tab--active {
-    color: #ffffff !important;
+    background: rgba(56, 189, 248, 0.14) !important;
+    border-color: rgba(56, 189, 248, 0.45) !important;
+    color: #38bdf8 !important;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.22) !important;
 }
 
 .tachyon_sections-tab__indicator {
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #ffffff !important;
-    border-radius: 2px;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8) !important;
+    display: none !important;
 }
 
 /* Country Chips Direct Bar & Rounded Rectangle (Matching Mockup) */
@@ -3453,28 +3450,64 @@ body.dark-theme .tachyon_proto-popover__desc {
     width: 100%;
 }
 
+.tachyon_dashboard-page__region-bar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 6px !important;
+    align-items: center !important;
+    padding-bottom: 4px !important;
+    scrollbar-width: thin !important;
+}
+
+.tachyon_dashboard-page__region-tab {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    border-radius: 20px !important;
+    padding: 5px 12px !important;
+}
+
 .tachyon_dashboard-page__country-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 8px !important;
+    align-items: center !important;
+    padding: 2px 2px 8px 2px !important;
+    scrollbar-width: thin !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.tachyon_dashboard-page__country-chips::-webkit-scrollbar {
+    height: 4px !important;
+}
+
+.tachyon_dashboard-page__country-chips::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.tachyon_dashboard-page__country-chips::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-radius: 4px !important;
 }
 
 .tachyon_dashboard-page__country-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 11px !important;
-    border-radius: 8px !important;
-    font-size: 12px;
-    font-weight: 500;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 13px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
     background: rgba(255, 255, 255, 0.04) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     color: var(--text-color-medium, #cbd5e1) !important;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    user-select: none;
-    box-sizing: border-box;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    user-select: none !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
 }
 
 .tachyon_dashboard-page__country-chip:hover {
@@ -3484,10 +3517,10 @@ body.dark-theme .tachyon_proto-popover__desc {
 }
 
 .tachyon_dashboard-page__country-chip--active {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.45) !important;
-    color: #ffffff !important;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.08) !important;
+    background: rgba(56, 189, 248, 0.15) !important;
+    border: 1px solid #38bdf8 !important;
+    color: #38bdf8 !important;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.25) !important;
 }
 
 .tachyon_dashboard-page__country-chip__count {
@@ -3971,19 +4004,24 @@ body.dark-theme .tachyon_proto-popover__desc {
     gap: 8px !important;
 }
 
-.tachyon-inbound-row-item {
+.tachyon-inbound-row-item,
+.tachyon-inbound-card.tachyon-inbound-row-item,
+.tachyon_inbounds-card .tachyon-inbound-row-item {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding: 8px 12px !important;
-    border-radius: 10px !important;
+    padding: 8px 14px !important;
+    border-radius: 12px !important;
     background: rgba(255, 255, 255, 0.03) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     cursor: pointer !important;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
     gap: 12px !important;
     box-sizing: border-box !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    white-space: nowrap !important;
 }
 
 .tachyon-inbound-row-item:hover {
@@ -3993,29 +4031,73 @@ body.dark-theme .tachyon_proto-popover__desc {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
+.tachyon-inbound-row-item .tachyon-inbound-card__top,
 .tachyon-inbound-row-item__left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-    min-width: 0;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
 }
 
 .tachyon-inbound-row-item__name {
-    font-size: 13px;
-    font-weight: 600;
-    color: #f1f5f9;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 140px;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #f1f5f9 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 140px !important;
+}
+
+.tachyon-inbound-row-item .tachyon-protocol-pill {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: #e2e8f0 !important;
+    padding: 2px 7px !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    flex-shrink: 0 !important;
+}
+
+.tachyon-inbound-row-item .tachyon-port-pill--online,
+.tachyon-inbound-row-item .tachyon-port-pill {
+    background: rgba(6, 182, 212, 0.15) !important;
+    color: #06b6d4 !important;
+    border: 1px solid rgba(6, 182, 212, 0.4) !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    flex-shrink: 0 !important;
+}
+
+.tachyon-inbound-row-item .tachyon-port-pill--offline {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.4) !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    flex-shrink: 0 !important;
 }
 
 .tachyon-inbound-row-item__center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    margin: 0 8px !important;
 }
 
 .tachyon-inbound-client-badge-group {
@@ -4058,18 +4140,26 @@ body.dark-theme .tachyon_proto-popover__desc {
     white-space: nowrap;
 }
 
+.tachyon-inbound-row-item .tachyon-inbound-card__bottom,
 .tachyon-inbound-row-item__right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    margin-top: 0 !important;
 }
 
+.tachyon-inbound-row-item .tachyon-inbound-mini-btn,
 .tachyon-inbound-mini-btn--qr,
 .tachyon-inbound-mini-btn--gear {
-    width: 26px !important;
-    height: 26px !important;
-    border-radius: 6px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    border-radius: 7px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -4079,13 +4169,16 @@ body.dark-theme .tachyon_proto-popover__desc {
     cursor: pointer !important;
     padding: 0 !important;
     transition: all 0.15s ease !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
 }
 
 .tachyon-inbound-mini-btn--qr:hover,
 .tachyon-inbound-mini-btn--gear:hover {
     background: rgba(56, 189, 248, 0.15) !important;
-    border-color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
     color: #38bdf8 !important;
+    transform: translateY(-1px);
 }
 
 /* Multi-Route Streams in Active Route Card */

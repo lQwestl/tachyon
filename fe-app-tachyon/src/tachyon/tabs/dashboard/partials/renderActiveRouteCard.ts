@@ -79,11 +79,19 @@ export function renderActiveRouteCard({
       const lat = r.latency ?? -1;
       let latencyBadgeClass = 'tachyon_active-route__latency--unknown';
       let latencyText = '—';
+      const isDirect =
+        r.protocol?.toLowerCase() === 'direct' ||
+        r.nodeName?.toLowerCase().includes('direct') ||
+        Boolean(r.sectionName?.toLowerCase().includes('desync'));
+
       if (lat > 0) {
         latencyText = `${lat} ms`;
         if (lat <= 100) latencyBadgeClass = 'tachyon_active-route__latency--fast';
         else if (lat <= 250) latencyBadgeClass = 'tachyon_active-route__latency--medium';
         else latencyBadgeClass = 'tachyon_active-route__latency--slow';
+      } else if (isDirect) {
+        latencyText = 'Direct';
+        latencyBadgeClass = 'tachyon_active-route__latency--fast';
       }
 
       return E(
@@ -120,18 +128,14 @@ export function renderActiveRouteCard({
                 ]
               : []),
           ]),
-          ...(lat > 0
-            ? [
-                E(
-                  'span',
-                  {
-                    class: `tachyon_active-route-card__latency ${latencyBadgeClass}`,
-                    ...(idx === 0 ? { 'data-route-val': 'latency' } : {}),
-                  } as any,
-                  latencyText,
-                ),
-              ]
-            : []),
+          E(
+            'span',
+            {
+              class: `tachyon_active-route-card__latency ${latencyBadgeClass}`,
+              ...(idx === 0 ? { 'data-route-val': 'latency' } : {}),
+            } as any,
+            `⚡ ${latencyText}`,
+          ),
         ],
       );
     });
@@ -139,6 +143,10 @@ export function renderActiveRouteCard({
     // Single node or fallback view
     let latencyBadgeClass = 'tachyon_active-route__latency--unknown';
     let latencyText = '—';
+    const isSingleDirect =
+      protocol?.toLowerCase() === 'direct' ||
+      nodeName?.toLowerCase().includes('direct');
+
     if (latency > 0) {
       latencyText = `${latency} ms`;
       if (latency <= 100)
@@ -146,6 +154,9 @@ export function renderActiveRouteCard({
       else if (latency <= 250)
         latencyBadgeClass = 'tachyon_active-route__latency--medium';
       else latencyBadgeClass = 'tachyon_active-route__latency--slow';
+    } else if (isSingleDirect) {
+      latencyText = 'Direct';
+      latencyBadgeClass = 'tachyon_active-route__latency--fast';
     }
 
     const nodeDetailsChildren: HTMLElement[] = [
@@ -187,19 +198,15 @@ export function renderActiveRouteCard({
           nodeDetailsChildren,
         ),
       ]),
+      E(
+        'span',
+        {
+          class: `tachyon_active-route-card__latency ${latencyBadgeClass}`,
+          'data-route-val': 'latency',
+        } as any,
+        `⚡ ${latencyText}`,
+      ),
     ];
-    if (latency > 0) {
-      nodeRowChildren.push(
-        E(
-          'span',
-          {
-            class: `tachyon_active-route-card__latency ${latencyBadgeClass}`,
-            'data-route-val': 'latency',
-          } as any,
-          latencyText,
-        ),
-      );
-    }
 
     bodyContent = [
       E('div', { class: 'tachyon_active-route-card__node-row' }, nodeRowChildren),
