@@ -1,7 +1,6 @@
 import {
   renderLoaderCircleIcon24,
   renderCopyIcon24,
-  renderLinkIcon24,
   renderInfoIcon24,
 } from '../../../../icons';
 import {
@@ -24,6 +23,11 @@ import {
   OutboundCountryGroup,
   WorldRegion,
 } from '../../../helpers/country';
+import {
+  renderUserProfileIcon,
+  renderSupportChatIcon,
+  renderInfoDetailsIcon,
+} from './dashboardIcons';
 
 const gridHoveredSections = new Set<string>();
 const gridFrozenOutboundOrders = new Map<string, string[]>();
@@ -65,6 +69,8 @@ interface IRenderSectionsProps {
   selectorSwitchingTag?: string;
   onTestSingleOutbound?: (sectionName: string, outboundCode: string) => void;
   testingOutboundCodes?: Record<string, boolean>;
+  hideTitleSection?: boolean;
+  sectionTabs?: HTMLElement;
 }
 
 const CONNECTION_ACTION_LABELS: Record<string, string> = {
@@ -143,17 +149,41 @@ function renderMetadataAction(label: string, url?: string) {
     return undefined;
   }
 
+  const isRu =
+    (typeof document !== 'undefined' &&
+      (document.documentElement?.lang || '').toLowerCase().startsWith('ru')) ||
+    false;
+
+  let iconEl: SVGElement = renderUserProfileIcon(14);
+  let text = label;
+  if (label === 'Profile') {
+    iconEl = renderUserProfileIcon(14);
+    text = isRu ? 'Профиль' : 'Profile';
+  } else if (label === 'Support') {
+    iconEl = renderSupportChatIcon(14);
+    text = isRu ? 'Поддержка' : 'Support';
+  } else if (label === 'More details') {
+    iconEl = renderInfoDetailsIcon(14);
+    text = isRu ? 'Подробнее' : 'Details';
+  }
+
   return E(
     'a',
     {
-      class: 'btn tachyon_dashboard-page__subscription-meta__action',
+      class:
+        'btn tachyon_dashboard-page__subscription-meta__action tachyon_subscription-action-btn',
       href: url,
       target: '_blank',
       rel: 'noopener noreferrer',
-      title: label,
-      'aria-label': label,
+      title: text,
+      'aria-label': text,
     },
-    renderLinkIcon24(),
+    [
+      E('span', { class: 'tachyon_subscription-action-btn__icon' }, [
+        iconEl as unknown as HTMLElement,
+      ]),
+      E('span', { class: 'tachyon_subscription-action-btn__text' }, text),
+    ],
   );
 }
 
@@ -401,7 +431,7 @@ function renderCountryChips(
 
   const mode = options?.chipsGrouping || 'regions';
   const activeRegion = (options?.activeRegion as WorldRegion) || 'all';
-  const isExpanded = Boolean(options?.isExpanded);
+  const isExpanded = options?.isExpanded !== false;
 
   const organized = organizeCountryGroups(countryGroups, mode, {
     activeCountryCode: options?.activeCountryCode,
@@ -956,6 +986,8 @@ function renderDefaultState({
   onFilterCountry,
   activeRegionFilter,
   onFilterRegion,
+  hideTitleSection = false,
+  sectionTabs,
 }: IRenderSectionsProps) {
   const isConnectionNode =
     !section.withTagSelect &&
@@ -1682,9 +1714,7 @@ function renderDefaultState({
     });
 
     const chipsCollapseKey = `countrychips:${section.code}`;
-    const isChipsExpanded = Boolean(
-      collapsedSourceGroups?.has(chipsCollapseKey),
-    );
+    const isChipsExpanded = !collapsedSourceGroups?.has(chipsCollapseKey);
 
     // Single source sections (or sections without distinct subscription sources)
     if (!hasMultipleSources) {
@@ -1953,21 +1983,8 @@ function renderDefaultState({
     (section.withTagSelect ||
       (section.outbounds && section.outbounds.length > 0));
 
-  return E(
-    'div',
-    {
-      class: [
-        'tachyon_dashboard-page__outbound-section',
-        section.configError
-          ? 'tachyon_dashboard-page__outbound-section--error'
-          : '',
-      ]
-        .filter(Boolean)
-        .join(' '),
-    },
-    [
-      // Title with test latency
-      E(
+  const titleSectionEl = !hideTitleSection
+    ? E(
         'div',
         {
           class: 'tachyon_dashboard-page__outbound-section__title-section',
@@ -2267,7 +2284,24 @@ function renderDefaultState({
             ],
           ),
         ],
-      ),
+      )
+    : null;
+
+  return E(
+    'div',
+    {
+      class: [
+        'tachyon_dashboard-page__outbound-section',
+        section.configError
+          ? 'tachyon_dashboard-page__outbound-section--error'
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+    },
+    [
+      ...(sectionTabs ? [sectionTabs] : []),
+      ...(titleSectionEl ? [titleSectionEl] : []),
       renderConfigErrorBanner(section),
       !isCollapsed
         ? E(

@@ -30,12 +30,16 @@ import {
 import {
   getLatencyTestLabel,
   renderFlagEmojis,
+  FLAG_EMOJI_PATTERN,
   renderSections,
   renderWidget,
   renderDualWidget,
   renderConnections,
   patchConnections,
   patchExistingClientRowsByIp,
+  renderHeroBar,
+  renderKpiRow,
+  renderActiveRouteCard,
   IConnection,
 } from './partials';
 import { fetchServicesInfo } from '../../fetchers/fetchServicesInfo';
@@ -51,7 +55,10 @@ import {
   isServiceGroup,
   ActiveRouteInfo,
 } from './activeRoute';
-import { ensureOutboundDisplayFlag } from '../../helpers/country';
+import {
+  detectOutboundCountry,
+  ensureOutboundDisplayFlag,
+} from '../../helpers/country';
 import {
   computeTrafficRates,
   createInitialTrafficRatesState,
@@ -59,6 +66,7 @@ import {
 } from './metrics';
 import {
   getConfiguredServerInbounds,
+  computeInboundsRuntimeSummary,
   renderInboundServersDashboardWidget,
   switchToServersTab,
 } from './inboundServers';
@@ -148,6 +156,7 @@ const activeCountryFilters = new Map<string, string>();
 const activeRegionFilters = new Map<string, string>();
 const singleTestingOutboundCodes: Record<string, boolean> = {};
 let isTestingAllSections = false;
+let activeSectionTabCode = '';
 
 let dashboardVisibilityPaused = false;
 
@@ -2088,6 +2097,221 @@ function updateLatencyProgressInline(
   return true;
 }
 
+// Theme & Modal Helpers
+
+function detectIsDarkTheme(): boolean {
+  if (typeof document === 'undefined') return true;
+  const doc = document.documentElement;
+  if (
+    doc?.getAttribute('data-darkmode') === 'true' ||
+    doc?.getAttribute('data-theme') === 'dark'
+  )
+    return true;
+  if (
+    doc?.getAttribute('data-darkmode') === 'false' ||
+    doc?.getAttribute('data-theme') === 'light'
+  )
+    return false;
+  if (
+    document.body?.classList.contains('dark-theme') ||
+    document.body?.classList.contains('theme-dark')
+  )
+    return true;
+  if (
+    document.body?.classList.contains('light-theme') ||
+    document.body?.classList.contains('theme-light')
+  )
+    return false;
+
+  try {
+    const bg = window.getComputedStyle(document.body).backgroundColor;
+    const match = bg.match(/\d+/g);
+    if (match && match.length >= 3) {
+      const r = Number(match[0]);
+      const g = Number(match[1]);
+      const b = Number(match[2]);
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      return brightness < 128;
+    }
+  } catch {
+    // ignore
+  }
+
+  if (
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function updateThemeClass() {
+  if (typeof document === 'undefined') return;
+  const container = document.getElementById('dashboard-status');
+  if (!container) return;
+  const isDark = detectIsDarkTheme();
+  container.classList.toggle('tachyon_dashboard-page--light', !isDark);
+  container.classList.toggle('tachyon_dashboard-page--dark', isDark);
+}
+
+function handleOpenConnectedClientsModal() {
+  const uiObj =
+    (typeof ui !== 'undefined' && ui) ||
+    (typeof window !== 'undefined' && (window as any).ui) ||
+    (typeof window !== 'undefined' && (window as any).L);
+
+  let clients: IConnection[] = currentConnections;
+  if (!clients || clients.length === 0) {
+    try {
+      const configuredServers = getConfiguredServerInbounds();
+      const summary = computeInboundsRuntimeSummary(
+        configuredServers,
+        lastRawConnections,
+        cachedHostnames,
+      );
+      const collected: IConnection[] = [];
+      summary.bySection.forEach((stats) => {
+        stats.clients.forEach((c) => {
+          collected.push({
+            ip: c.ip,
+            name: c.name || c.ip,
+            count: c.activeConns,
+            download: c.download,
+            upload: c.upload,
+          });
+        });
+      });
+      if (collected.length > 0) {
+        clients = collected;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const modalBody = E('div', { class: 'tachyon-inbound-clients-modal' }, [
+    clients.length === 0
+      ? E(
+          'div',
+          { class: 'tachyon-inbound-clients-modal__empty' },
+          tr('Нет активных клиентов', 'No active clients'),
+        )
+      : E('div', { class: 'tachyon-inbound-clients-modal__table-wrap' }, [
+          E('table', { class: 'table tachyon-inbound-clients-modal__table' }, [
+            E('thead', {}, [
+              E('tr', {}, [
+                E('th', {}, tr('Устройство / Клиент', 'Device / Client')),
+                E(
+                  'th',
+                  { style: 'text-align: right;' },
+                  tr('Соединения', 'Connections'),
+                ),
+                E(
+                  'th',
+                  { style: 'text-align: right;' },
+                  tr('Загрузка', 'Download'),
+                ),
+                E(
+                  'th',
+                  { style: 'text-align: right;' },
+                  tr('Отдача', 'Upload'),
+                ),
+              ]),
+            ]),
+            E(
+              'tbody',
+              {},
+              clients.map((c) => {
+                const displayName = c.name || c.ip;
+                const hasName = Boolean(c.name && c.name !== c.ip);
+                return E('tr', {}, [
+                  E('td', {}, [
+                    E(
+                      'div',
+                      { class: 'tachyon-inbound-clients-modal__client-cell' },
+                      [
+                        E(
+                          'span',
+                          {
+                            style: 'font-weight: 600;',
+                          },
+                          displayName,
+                        ),
+                        hasName
+                          ? E(
+                              'span',
+                              {
+                                style:
+                                  'font-size: 11px; opacity: 0.7; font-family: ui-monospace, monospace;',
+                              },
+                              ` (${c.ip})`,
+                            )
+                          : '',
+                      ],
+                    ),
+                  ]),
+                  E('td', { style: 'text-align: right;' }, [
+                    E(
+                      'span',
+                      {
+                        class: 'tachyon_kpi-badge tachyon_kpi-badge--fast',
+                        style: 'font-size: 11px; padding: 1px 7px;',
+                      },
+                      `${c.count}`,
+                    ),
+                  ]),
+                  E(
+                    'td',
+                    {
+                      style:
+                        'text-align: right; font-family: ui-monospace, monospace; color: #38bdf8;',
+                    },
+                    prettyBytes(c.download),
+                  ),
+                  E(
+                    'td',
+                    {
+                      style:
+                        'text-align: right; font-family: ui-monospace, monospace; color: #818cf8;',
+                    },
+                    prettyBytes(c.upload),
+                  ),
+                ]);
+              }),
+            ),
+          ]),
+        ]),
+    E('div', { class: 'tachyon_dashboard-page__urltest-details__footer' }, [
+      E(
+        'button',
+        {
+          type: 'button',
+          class: 'btn cbi-button cbi-button-neutral',
+          click: () => {
+            if (typeof uiObj?.hideModal === 'function') {
+              uiObj.hideModal();
+            } else if (typeof (window as any)?.L?.hideModal === 'function') {
+              (window as any).L.hideModal();
+            }
+          },
+        },
+        tr('Закрыть', 'Close'),
+      ),
+    ]),
+  ]);
+
+  if (uiObj && typeof uiObj.showModal === 'function') {
+    uiObj.showModal(tr('Подключенные клиенты', 'Connected Clients'), modalBody);
+  } else if (typeof (window as any)?.L?.showModal === 'function') {
+    (window as any).L.showModal(
+      tr('Подключенные клиенты', 'Connected Clients'),
+      modalBody,
+    );
+  }
+}
+
 // Renderer
 
 let sectionsRenderFrame: number | null = null;
@@ -2283,17 +2507,68 @@ async function renderSectionsWidget() {
     pendingServiceCards = [];
   };
 
-  for (const section of sectionsWithCustomLatencies) {
-    const widget = renderSections({
+  const proxySections = sectionsWithCustomLatencies.filter(
+    (s) =>
+      !isServiceGroup(s) &&
+      s.outbounds &&
+      s.outbounds.length > 0 &&
+      !SERVICE_TYPES.has(s.outbounds[0]?.type),
+  );
+  const serviceSections = sectionsWithCustomLatencies.filter(
+    (s) => !proxySections.includes(s),
+  );
+
+  if (proxySections.length > 0) {
+    if (
+      !activeSectionTabCode ||
+      !proxySections.some((s) => s.code === activeSectionTabCode)
+    ) {
+      activeSectionTabCode = proxySections[0].code;
+    }
+
+    const tabsEl = E(
+      'div',
+      { class: 'tachyon_sections-tabs-bar' },
+      proxySections.map((s) => {
+        const isActive = s.code === activeSectionTabCode;
+        return E(
+          'button',
+          {
+            type: 'button',
+            class: `tachyon_sections-tab${isActive ? ' tachyon_sections-tab--active' : ''}`,
+            click: (e: MouseEvent) => {
+              e.preventDefault();
+              activeSectionTabCode = s.code;
+              void renderSectionsWidget();
+            },
+          },
+          [
+            E(
+              'span',
+              { class: 'tachyon_sections-tab__text' },
+              s.displayName || s.sectionName,
+            ),
+            isActive
+              ? E('span', { class: 'tachyon_sections-tab__indicator' })
+              : '',
+          ],
+        );
+      }),
+    );
+
+    const activeSection =
+      proxySections.find((s) => s.code === activeSectionTabCode) ||
+      proxySections[0];
+
+    const activeWidget = renderSections({
       loading: sectionsWidget.loading,
       failed: sectionsWidget.failed,
-      section,
-      isCollapsed: !expandedSections.has(section.code),
-      onToggleCollapse: () => toggleSectionExpanded(section.code),
+      section: activeSection,
+      isCollapsed: false,
       collapsedSourceGroups: expandedSections,
       onToggleSourceGroupCollapse: (groupKey: string) =>
         toggleSectionExpanded(groupKey),
-      activeCountryFilter: activeCountryFilters.get(section.sectionName),
+      activeCountryFilter: activeCountryFilters.get(activeSection.sectionName),
       onFilterCountry: (sectionName: string, countryCode?: string) => {
         if (countryCode) {
           activeCountryFilters.set(sectionName, countryCode);
@@ -2302,44 +2577,45 @@ async function renderSectionsWidget() {
         }
         void renderSectionsWidget();
       },
-      activeRegionFilter: activeRegionFilters.get(section.sectionName) || 'all',
+      activeRegionFilter:
+        activeRegionFilters.get(activeSection.sectionName) || 'all',
       onFilterRegion: (sectionName: string, region: string) => {
         activeRegionFilters.set(sectionName, region);
         activeCountryFilters.delete(sectionName);
         void renderSectionsWidget();
       },
       latencyFetching: Boolean(
-        sectionsWidget.latencyFetchingSections[section.sectionName],
+        sectionsWidget.latencyFetchingSections[activeSection.sectionName],
       ),
       latencyProgress:
-        sectionsWidget.latencyProgressSections[section.sectionName],
+        sectionsWidget.latencyProgressSections[activeSection.sectionName],
       subscriptionUpdating: Boolean(
-        sectionsWidget.subscriptionUpdatingSections[section.sectionName],
+        sectionsWidget.subscriptionUpdatingSections[activeSection.sectionName],
       ),
       selectorSwitchingTag:
-        sectionsWidget.selectorSwitchingSections[section.sectionName],
+        sectionsWidget.selectorSwitchingSections[activeSection.sectionName],
       onTestSingleOutbound: (sectionName, outboundCode) => {
         void handleTestSingleOutbound(sectionName, outboundCode);
       },
       testingOutboundCodes: singleTestingOutboundCodes,
       onTestLatency: (tag) => {
-        if (section.withTagSelect) {
+        if (activeSection.withTagSelect) {
           if (Array.isArray(tag)) {
             return handleTestLatency(
               'proxy_list',
-              section.sectionName,
+              activeSection.sectionName,
               JSON.stringify(tag),
             );
           }
 
-          return handleTestLatency('group', section.sectionName, tag);
+          return handleTestLatency('group', activeSection.sectionName, tag);
         }
 
         return handleTestLatency(
           'proxy',
-          section.sectionName,
+          activeSection.sectionName,
           Array.isArray(tag) ? JSON.stringify(tag) : tag,
-          section.latencyTestTimeout,
+          activeSection.latencyTestTimeout,
         );
       },
       onChooseOutbound: (sectionName, selector, tag) => {
@@ -2357,22 +2633,125 @@ async function renderSectionsWidget() {
       onUpdateSubscription: (section) => {
         void handleUpdateSubscription(section);
       },
+      hideTitleSection: true,
+      sectionTabs: tabsEl,
     });
 
-    if (isServiceGroup(section)) {
-      pendingServiceCards.push(widget);
-    } else {
-      flushServiceCards();
-      renderedWidgets.push(widget);
+    renderedWidgets.push(activeWidget);
+
+    for (const s of serviceSections) {
+      const serviceWidget = renderSections({
+        loading: sectionsWidget.loading,
+        failed: sectionsWidget.failed,
+        section: s,
+        isCollapsed: !expandedSections.has(s.code),
+        onToggleCollapse: () => toggleSectionExpanded(s.code),
+        onTestLatency: () => {},
+        onChooseOutbound: () => {},
+        onCopyOutbound: () => {},
+        onShowUrlTestInfo: () => {},
+        onShowPriorityInfo: () => {},
+        onUpdateSubscription: () => {},
+        latencyFetching: false,
+        subscriptionUpdating: false,
+      });
+      pendingServiceCards.push(serviceWidget);
     }
+    flushServiceCards();
+  } else {
+    for (const section of sectionsWithCustomLatencies) {
+      const widget = renderSections({
+        loading: sectionsWidget.loading,
+        failed: sectionsWidget.failed,
+        section,
+        isCollapsed: !expandedSections.has(section.code),
+        onToggleCollapse: () => toggleSectionExpanded(section.code),
+        collapsedSourceGroups: expandedSections,
+        onToggleSourceGroupCollapse: (groupKey: string) =>
+          toggleSectionExpanded(groupKey),
+        activeCountryFilter: activeCountryFilters.get(section.sectionName),
+        onFilterCountry: (sectionName: string, countryCode?: string) => {
+          if (countryCode) {
+            activeCountryFilters.set(sectionName, countryCode);
+          } else {
+            activeCountryFilters.delete(sectionName);
+          }
+          void renderSectionsWidget();
+        },
+        activeRegionFilter:
+          activeRegionFilters.get(section.sectionName) || 'all',
+        onFilterRegion: (sectionName: string, region: string) => {
+          activeRegionFilters.set(sectionName, region);
+          activeCountryFilters.delete(sectionName);
+          void renderSectionsWidget();
+        },
+        latencyFetching: Boolean(
+          sectionsWidget.latencyFetchingSections[section.sectionName],
+        ),
+        latencyProgress:
+          sectionsWidget.latencyProgressSections[section.sectionName],
+        subscriptionUpdating: Boolean(
+          sectionsWidget.subscriptionUpdatingSections[section.sectionName],
+        ),
+        selectorSwitchingTag:
+          sectionsWidget.selectorSwitchingSections[section.sectionName],
+        onTestSingleOutbound: (sectionName, outboundCode) => {
+          void handleTestSingleOutbound(sectionName, outboundCode);
+        },
+        testingOutboundCodes: singleTestingOutboundCodes,
+        onTestLatency: (tag) => {
+          if (section.withTagSelect) {
+            if (Array.isArray(tag)) {
+              return handleTestLatency(
+                'proxy_list',
+                section.sectionName,
+                JSON.stringify(tag),
+              );
+            }
+
+            return handleTestLatency('group', section.sectionName, tag);
+          }
+
+          return handleTestLatency(
+            'proxy',
+            section.sectionName,
+            Array.isArray(tag) ? JSON.stringify(tag) : tag,
+            section.latencyTestTimeout,
+          );
+        },
+        onChooseOutbound: (sectionName, selector, tag) => {
+          void handleChooseOutbound(sectionName, selector, tag);
+        },
+        onCopyOutbound: (_section, outbound) => {
+          handleCopyOutbound(outbound);
+        },
+        onShowUrlTestInfo: (section, outbound) => {
+          handleShowUrlTestInfo(section, outbound);
+        },
+        onShowPriorityInfo: (section, outbound) => {
+          handleShowPriorityInfo(section, outbound);
+        },
+        onUpdateSubscription: (section) => {
+          void handleUpdateSubscription(section);
+        },
+      });
+
+      if (isServiceGroup(section)) {
+        pendingServiceCards.push(widget);
+      } else {
+        flushServiceCards();
+        renderedWidgets.push(widget);
+      }
+    }
+    flushServiceCards();
   }
-  flushServiceCards();
 
   return preserveScrollForPage(() => {
     container.replaceChildren(
       ...(testAllHeader ? [testAllHeader] : []),
       ...renderedWidgets,
     );
+    renderHeroAndKpiWidgets();
   }, container);
 }
 
@@ -2574,6 +2953,7 @@ function scheduleConnectionsWidgetRender() {
   connectionsRenderFrame = schedule(() => {
     connectionsRenderFrame = null;
     renderConnectionsWidget();
+    renderHeroAndKpiWidgets();
   }) as unknown as number;
 }
 
@@ -3298,6 +3678,7 @@ function scheduleSectionDashboardWidgetsRender() {
       rawConnections: lastRawConnections,
       hostnames: cachedHostnames,
     });
+    renderHeroAndKpiWidgets();
   }) as unknown as number;
 }
 
@@ -3311,6 +3692,7 @@ function scheduleSystemServicesWidgetRender() {
   systemServicesRenderFrame = schedule(() => {
     systemServicesRenderFrame = null;
     void renderSystemServicesWidget();
+    renderHeroAndKpiWidgets();
   }) as unknown as number;
 }
 
@@ -3544,6 +3926,193 @@ export function renderServiceRowItem(
   };
 }
 
+let isRestartingService = false;
+
+async function handleRestartService() {
+  if (isRestartingService) return;
+  isRestartingService = true;
+  renderHeroAndKpiWidgets();
+  showToast(tr('Перезапуск Tachyon...', 'Restarting Tachyon...'), 'success');
+  try {
+    const res = await TachyonShellMethods.serviceActionStart('restart');
+    if (res.success && res.data?.job_id) {
+      await TachyonShellMethods.waitServiceActionJob(res.data.job_id);
+      showToast(tr('Служба перезапущена', 'Service restarted'), 'success');
+    } else {
+      showToast(
+        tr('Не удалось перезапустить службу', 'Failed to restart service'),
+        'error',
+      );
+    }
+  } catch (e) {
+    logger.error('[DASHBOARD]', 'handleRestartService failed', e);
+    showToast(
+      tr('Ошибка при перезапуске службы', 'Service restart error'),
+      'error',
+    );
+  } finally {
+    isRestartingService = false;
+    await fetchServicesInfo();
+    renderHeroAndKpiWidgets();
+  }
+}
+
+export function renderHeroAndKpiWidgets() {
+  updateThemeClass();
+
+  const heroContainer = document.getElementById('dashboard-hero-bar');
+  const kpiContainer = document.getElementById('dashboard-kpi-row');
+  const activeRouteContainer = document.getElementById(
+    'dashboard-active-route-card',
+  );
+
+  const srvState = store.get().servicesInfoWidget;
+  const sysState = store.get().systemInfoWidget;
+  const bwState = store.get().bandwidthWidget;
+  const totalState = store.get().trafficTotalWidget;
+  const sectionsState = store.get().sectionsWidget;
+  const diagInfo = store.get().diagnosticsSystemInfo;
+
+  const srvData = srvState.data;
+  const isRunning = Boolean(srvData?.tachyonRunning);
+  const rawVersion =
+    diagInfo?.tachyon_version || diagInfo?.luci_app_version || '';
+  const version =
+    rawVersion && !rawVersion.includes('loading') ? rawVersion : '';
+  const uptimeText =
+    formatLocalizedUptime(
+      srvData?.tachyonUptimePretty,
+      srvData?.tachyonUptimeSeconds,
+    ) || '';
+  const routingModeText = isRunning ? 'TProxy + Fake-IP' : '';
+
+  // 1. Hero bar
+  if (heroContainer) {
+    const heroEl = renderHeroBar({
+      isRunning,
+      version,
+      uptimeText,
+      routingModeText,
+      restarting: isRestartingService,
+      onRestart: handleRestartService,
+    });
+    heroContainer.replaceChildren(heroEl);
+  }
+
+  // 2. Active Route computation
+  const sectionsWithCustomLatencies = (sectionsState.data || []).map(
+    (section) => ({
+      ...section,
+      outbounds: (section.outbounds || []).map((outbound) => {
+        const customLatency = customProxyLatencies.get(outbound.code);
+        return {
+          ...outbound,
+          latency: customLatency ?? outbound.latency,
+          urlTestInfo: outbound.urlTestInfo
+            ? {
+                ...outbound.urlTestInfo,
+                outbounds: outbound.urlTestInfo.outbounds.map((member) => ({
+                  ...member,
+                  latency:
+                    customProxyLatencies.get(member.code) ?? member.latency,
+                })),
+              }
+            : undefined,
+          priorityInfo: outbound.priorityInfo
+            ? {
+                ...outbound.priorityInfo,
+                outbounds: outbound.priorityInfo.outbounds.map((member) => ({
+                  ...member,
+                  latency:
+                    customProxyLatencies.get(member.code) ?? member.latency,
+                })),
+              }
+            : undefined,
+        };
+      }),
+    }),
+  );
+
+  const activeRoutes = getAllActiveRoutes(sectionsWithCustomLatencies);
+  const mappedRoutes = activeRoutes.map((r) => {
+    const rRawName = r.name || '';
+    const rCountryInfo = rRawName
+      ? detectOutboundCountry({ displayName: rRawName })
+      : null;
+    const rFlag = rCountryInfo?.flag || '🌐';
+    const rCleanNodeName =
+      rRawName.replace(FLAG_EMOJI_PATTERN, '').trim() || rRawName;
+    return {
+      sectionName: r.sectionName,
+      sectionDisplayName: r.sectionDisplayName,
+      nodeName: rCleanNodeName,
+      flagEmoji: rFlag,
+      protocol: r.type || '',
+      latency: r.latency ?? -1,
+      selector: r.selector,
+    };
+  });
+
+  const mainRoute =
+    activeRoutes.find((r) => r.sectionName === 'main') || activeRoutes[0];
+  const rawNodeName = mainRoute?.name || '';
+  const routeCountryInfo = rawNodeName
+    ? detectOutboundCountry({ displayName: rawNodeName })
+    : null;
+  const flagEmoji = routeCountryInfo?.flag || '🌐';
+  const cleanNodeName =
+    rawNodeName.replace(FLAG_EMOJI_PATTERN, '').trim() || rawNodeName;
+  const latency = mainRoute?.latency ?? -1;
+  const protocol = mainRoute?.type || '';
+  const balancerMode = mainRoute?.selector || '';
+
+  // Count active proxy sections
+  const proxySections = (sectionsState.data || []).filter(
+    (g) => !isServiceGroup(g) && g.outbounds && g.outbounds.length > 0,
+  );
+
+  // Clients count
+  const clientsCount =
+    currentConnections.length > 0
+      ? currentConnections.length
+      : sysState.data?.connections || 0;
+
+  // 3. KPI row
+  if (kpiContainer) {
+    const kpiEl = renderKpiRow({
+      downSpeed: bwState.data?.down || 0,
+      upSpeed: bwState.data?.up || 0,
+      totalDown: totalState.data?.downloadTotal || 0,
+      totalUp: totalState.data?.uploadTotal || 0,
+      latency,
+      activeRoutesCount: proxySections.length,
+      activeNodeName: cleanNodeName,
+      clientsCount,
+      isLoading: bwState.loading && totalState.loading,
+      onOpenClientsModal: handleOpenConnectedClientsModal,
+    });
+    kpiContainer.replaceChildren(kpiEl);
+  }
+
+  // 4. Active Route Card
+  if (activeRouteContainer) {
+    const zapretActive = Boolean(srvData?.zapret2Running);
+    const activeRouteEl = renderActiveRouteCard({
+      nodeName: cleanNodeName,
+      flagEmoji,
+      protocol,
+      latency,
+      balancerMode,
+      dpiProvider: zapretActive ? 'Zapret2' : '',
+      dpiActive: zapretActive,
+      activeSectionsCount: proxySections.length,
+      isLoading: sectionsState.loading,
+      routes: mappedRoutes,
+    });
+    activeRouteContainer.replaceChildren(activeRouteEl);
+  }
+}
+
 let latestTailscalePeersRequestId = 0;
 
 async function fetchTailscalePeers() {
@@ -3726,6 +4295,7 @@ async function onPageMount() {
     rawConnections: lastRawConnections,
     hostnames: cachedHostnames,
   });
+  renderHeroAndKpiWidgets();
   syncDashboardServiceAvailability();
   void fetchTailscalePeers();
 
