@@ -4388,5 +4388,1146 @@ body.dark-theme .tachyon_proto-popover__desc {
 .tachyon_dashboard-page--light .tachyon-inbound-modal__empty-title {
     color: #0f172a !important;
 }
+
+/* ==========================================================================
+   TACHYON DASHBOARD V3: EXACT SCREENSHOT DESIGN & ARCHITECTURE
+   ========================================================================== */
+
+.tachyon_dashboard-v3 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    width: 100% !important;
+    min-height: 100% !important;
+    box-sizing: border-box !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    color: #f8fafc !important;
+}
+
+/* --- Top Brand Header --- */
+.tachyon_top-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 12px 20px !important;
+    background: rgba(13, 21, 34, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(12px) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+.tachyon_top-header__brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+.tachyon_top-header__title-wrap {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 2px !important;
+}
+
+.tachyon_top-header__title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.01em !important;
+}
+
+.tachyon_top-header__subtitle {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+}
+
+.tachyon_top-header__prod-badge {
+    background: rgba(56, 189, 248, 0.12) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    color: #38bdf8 !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    padding: 2px 8px !important;
+    border-radius: 9999px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    line-height: 1.4 !important;
+}
+
+.tachyon_top-header__prod-badge:hover {
+    background: rgba(56, 189, 248, 0.22) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3) !important;
+}
+
+.tachyon_top-header__meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    font-size: 12px !important;
+    color: #94a3b8 !important;
+}
+
+.tachyon_top-header__status-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.tachyon_top-header__status-dot {
+    width: 7px !important;
+    height: 7px !important;
+    border-radius: 50% !important;
+    background: #10b981 !important;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.8) !important;
+    display: inline-block !important;
+}
+
+.tachyon_top-header__status-item--offline .tachyon_top-header__status-dot {
+    background: #ef4444 !important;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.8) !important;
+}
+
+.tachyon_top-header__status-text {
+    font-weight: 500 !important;
+    color: #f8fafc !important;
+}
+
+.tachyon_top-header__divider {
+    color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.tachyon_top-header__updated {
+    font-size: 12px !important;
+    color: #64748b !important;
+}
+
+.tachyon_top-header__updated-time {
+    color: #cbd5e1 !important;
+    font-family: ui-monospace, monospace !important;
+}
+
+.tachyon_top-header__lang-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 4px 10px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 6px !important;
+    color: #f8fafc !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.tachyon_top-header__lang-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* --- Layout Outer (Sidebar + Main Content) --- */
+.tachyon_dashboard-v3__layout {
+    display: flex !important;
+    gap: 20px !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#dashboard-sidebar {
+    width: 200px !important;
+    flex-shrink: 0 !important;
+    position: sticky !important;
+    top: 16px !important;
+}
+
+.tachyon_sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    background: rgba(13, 21, 34, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 8px !important;
+    backdrop-filter: blur(12px) !important;
+    box-sizing: border-box !important;
+}
+
+.tachyon_sidebar__item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    padding: 10px 14px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.18s ease !important;
+    text-align: left !important;
+    box-sizing: border-box !important;
+}
+
+.tachyon_sidebar__item:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #f8fafc !important;
+}
+
+.tachyon_sidebar__item--active {
+    background: rgba(56, 189, 248, 0.12) !important;
+    color: #38bdf8 !important;
+    font-weight: 600 !important;
+    box-shadow: inset 3px 0 0 #38bdf8 !important;
+}
+
+.tachyon_sidebar__item-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    color: inherit !important;
+}
+
+.tachyon_sidebar__item-label {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* --- Main Content Area --- */
+.tachyon_dashboard-v3__main {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    box-sizing: border-box !important;
+}
+
+.tachyon_dashboard-v3__title-block {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    margin-bottom: 2px !important;
+}
+
+.tachyon_dashboard-v3__page-title {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin: 0 !important;
+    letter-spacing: -0.01em !important;
+}
+
+.tachyon_dashboard-v3__page-subtitle {
+    font-size: 13px !important;
+    color: #64748b !important;
+    margin: 0 !important;
+    font-weight: 400 !important;
+}
+
+/* --- Tier 1: 4 Top KPI Cards --- */
+.tachyon_dashboard-v3__kpi-wrap {
+    width: 100% !important;
+}
+
+.tachyon_kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 14px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 1200px) {
+    .tachyon_kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .tachyon_kpi-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.tachyon_kpi-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    background: rgba(13, 21, 34, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+    box-sizing: border-box !important;
+}
+
+.tachyon_kpi-card--clickable {
+    cursor: pointer !important;
+}
+
+.tachyon_kpi-card:hover {
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+.tachyon_kpi-card__icon-wrap {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+.tachyon_kpi-card__icon-wrap--teal {
+    background: rgba(20, 184, 166, 0.15) !important;
+    color: #14b8a6 !important;
+}
+
+.tachyon_kpi-card__icon-wrap--cyan {
+    background: rgba(6, 182, 212, 0.15) !important;
+    color: #06b6d4 !important;
+}
+
+.tachyon_kpi-card__icon-wrap--blue {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #3b82f6 !important;
+}
+
+.tachyon_kpi-card__icon-wrap--emerald {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+}
+
+.tachyon_kpi-card__info {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+}
+
+.tachyon_kpi-card__label {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+}
+
+.tachyon_kpi-card__value {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.2 !important;
+}
+
+.tachyon_kpi-card__trend {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    margin-top: 2px !important;
+}
+
+.tachyon_kpi-card__trend--up,
+.tachyon_kpi-card__trend--good {
+    color: #10b981 !important;
+}
+
+.tachyon_kpi-card__trend--stable {
+    color: #94a3b8 !important;
+}
+
+.tachyon_kpi-card__trend--warn {
+    color: #f59e0b !important;
+}
+
+/* --- Tier 2: Mid Split (Spline Traffic Chart + System Health) --- */
+.tachyon_dashboard-v3__mid-split {
+    display: grid !important;
+    grid-template-columns: 2fr 1fr !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 1080px) {
+    .tachyon_dashboard-v3__mid-split {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.tachyon_dashboard-v3__mid-left,
+.tachyon_dashboard-v3__mid-right {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Traffic Spline Chart Card */
+.tachyon_traffic-chart-card {
+    background: rgba(13, 21, 34, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    box-sizing: border-box !important;
+    height: 100% !important;
+}
+
+.tachyon_traffic-chart__header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+
+.tachyon_traffic-chart__title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+}
+
+.tachyon_traffic-chart__controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    font-size: 12px !important;
+}
+
+.tachyon_traffic-chart__legend-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    color: #94a3b8 !important;
+    font-size: 12px !important;
+}
+
+.tachyon_traffic-chart__dot {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+}
+
+.tachyon_traffic-chart__dot--in {
+    background: #00d2ff !important;
+    box-shadow: 0 0 6px #00d2ff !important;
+}
+
+.tachyon_traffic-chart__dot--out {
+    background: #10b981 !important;
+    box-shadow: 0 0 6px #10b981 !important;
+}
+
+.tachyon_traffic-chart__live-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 3px 9px !important;
+    background: rgba(15, 23, 42, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 6px !important;
+    font-family: ui-monospace, monospace !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+}
+
+.tachyon_traffic-chart__live-in {
+    color: #00d2ff !important;
+}
+
+.tachyon_traffic-chart__live-sep {
+    color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.tachyon_traffic-chart__live-out {
+    color: #10b981 !important;
+}
+
+.tachyon_traffic-chart__filter-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 4px 10px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 6px !important;
+    color: #f8fafc !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.tachyon_traffic-chart__filter-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.tachyon_traffic-chart__canvas-wrap {
+    width: 100% !important;
+    height: 215px !important;
+    position: relative !important;
+}
+
+.tachyon_traffic-chart__svg {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+    display: block !important;
+}
+
+/* System Health Card */
+.tachyon_system-health-card {
+    background: rgba(13, 21, 34, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    box-sizing: border-box !important;
+    height: 100% !important;
+}
+
+.tachyon_system-health__header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.tachyon_system-health__title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+}
+
+.tachyon_system-health__status-badge {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 3px 9px !important;
+    border-radius: 9999px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.tachyon_system-health__status-badge--ok {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.tachyon_system-health__status-badge--ok:hover {
+    background: rgba(16, 185, 129, 0.25) !important;
+    border-color: #10b981 !important;
+}
+
+.tachyon_system-health__status-badge--warn {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #f59e0b !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.tachyon_system-health__body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    justify-content: space-between !important;
+    flex: 1 !important;
+}
+
+.tachyon_system-health__item {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 12px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 8px !important;
+    transition: all 0.15s ease !important;
+}
+
+.tachyon_system-health__item--clickable {
+    cursor: pointer !important;
+}
+
+.tachyon_system-health__item:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tachyon_system-health__item-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.tachyon_system-health__item-dot {
+    width: 7px !important;
+    height: 7px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+}
+
+.tachyon_system-health__item-dot--online {
+    background: #10b981 !important;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.8) !important;
+}
+
+.tachyon_system-health__item-dot--offline {
+    background: #ef4444 !important;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.8) !important;
+}
+
+.tachyon_system-health__item-info {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+}
+
+.tachyon_system-health__item-name {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #f8fafc !important;
+}
+
+.tachyon_system-health__item-role {
+    font-size: 11px !important;
+    color: #64748b !important;
+}
+
+.tachyon_system-health__item-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+}
+
+.tachyon_system-health__metric-col {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 2px !important;
+}
+
+.tachyon_system-health__metric-label {
+    font-size: 10px !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    font-weight: 500 !important;
+}
+
+.tachyon_system-health__metric-val {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #cbd5e1 !important;
+    font-family: ui-monospace, monospace !important;
+}
+
+.tachyon_system-health__chevron {
+    color: #64748b !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* --- Tier 3: Routes Table Card --- */
+.tachyon_routes-card {
+    background: rgba(13, 21, 34, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+.tachyon_routes-table__header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.tachyon_routes-table__title-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #ffffff !important;
+}
+
+.tachyon_routes-table__title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+
+.tachyon_routes-table__action-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 12px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 6px !important;
+    color: #94a3b8 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.tachyon_routes-table__action-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.tachyon_routes-table__list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+.tachyon_route-row {
+    display: grid !important;
+    grid-template-columns: 2.2fr 1fr 1.8fr 1.6fr 1.2fr 1fr 1.2fr !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px 14px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 10px !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 1080px) {
+    .tachyon_route-row {
+        grid-template-columns: 2fr 1fr 1.5fr 1fr !important;
+    }
+    .tachyon_route-row__col-info:nth-child(4),
+    .tachyon_route-row__col-info:nth-child(5),
+    .tachyon_route-row__col-info:nth-child(6) {
+        display: none !important;
+    }
+}
+
+.tachyon_route-row:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+.tachyon_route-row__col-primary {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+}
+
+.tachyon_route-row__name-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+}
+
+.tachyon_route-row__name {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.tachyon_route-row__subtitle {
+    font-size: 11px !important;
+    color: #64748b !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.tachyon_route-row__col-status {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.tachyon_route-row__status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    padding: 3px 8px !important;
+    border-radius: 9999px !important;
+}
+
+.tachyon_route-row__status-badge--active {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.tachyon_route-row__status-badge--inactive {
+    background: rgba(100, 116, 139, 0.15) !important;
+    color: #94a3b8 !important;
+    border: 1px solid rgba(100, 116, 139, 0.3) !important;
+}
+
+.tachyon_route-row__status-dot {
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: currentColor !important;
+    display: inline-block !important;
+}
+
+.tachyon_route-row__col-info {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+}
+
+.tachyon_route-row__label {
+    font-size: 10px !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+}
+
+.tachyon_route-row__val {
+    font-size: 12px !important;
+    color: #cbd5e1 !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.tachyon_route-row__val--server {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.tachyon_route-row__flag {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+}
+
+.tachyon_route-row__val--number {
+    font-family: ui-monospace, monospace !important;
+}
+
+.tachyon_route-row__col-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+}
+
+.tachyon_route-row__latency-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 3px 8px !important;
+    border-radius: 9999px !important;
+    font-family: ui-monospace, monospace !important;
+}
+
+.tachyon_route-row__latency--green {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.tachyon_route-row__latency--yellow {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #f59e0b !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.tachyon_route-row__latency--red {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.tachyon_route-row__latency-dot {
+    width: 5px !important;
+    height: 5px !important;
+    border-radius: 50% !important;
+    background: currentColor !important;
+    display: inline-block !important;
+}
+
+.tachyon_route-row__chevron {
+    color: #64748b !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* --- Tier 4: Nodes Section --- */
+.tachyon_nodes-section {
+    background: rgba(13, 21, 34, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+.tachyon_nodes-grid__header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.tachyon_nodes-grid__title-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #ffffff !important;
+}
+
+.tachyon_nodes-grid__title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+
+.tachyon_nodes-grid__action-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 12px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 6px !important;
+    color: #94a3b8 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.tachyon_nodes-grid__action-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.tachyon_nodes-grid__action-btn--loading svg {
+    animation: tachyon_spin 1s linear infinite !important;
+}
+
+.tachyon_nodes-grid__body {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 14px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 1200px) {
+    .tachyon_nodes-grid__body {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .tachyon_nodes-grid__body {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.tachyon_node-card {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 10px !important;
+    padding: 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    transition: all 0.2s ease !important;
+    box-sizing: border-box !important;
+    cursor: pointer !important;
+}
+
+.tachyon_node-card:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(56, 189, 248, 0.3) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+.tachyon_node-card__top {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.tachyon_node-card__name-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+.tachyon_node-card__flag {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+}
+
+.tachyon_node-card__name {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.tachyon_node-card__tag-badge {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+    flex-shrink: 0 !important;
+}
+
+.tachyon_node-card__middle {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 11px !important;
+}
+
+.tachyon_node-card__protocol {
+    color: #64748b !important;
+    font-family: ui-monospace, monospace !important;
+}
+
+.tachyon_node-card__latency {
+    font-weight: 600 !important;
+    font-family: ui-monospace, monospace !important;
+}
+
+.tachyon_node-card__latency--fast {
+    color: #10b981 !important;
+}
+
+.tachyon_node-card__latency--medium {
+    color: #f59e0b !important;
+}
+
+.tachyon_node-card__latency--slow {
+    color: #ef4444 !important;
+}
+
+.tachyon_node-card__bottom {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 11px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.tachyon_node-card__status {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    font-weight: 500 !important;
+}
+
+.tachyon_node-card__status--online {
+    color: #10b981 !important;
+}
+
+.tachyon_node-card__status--offline {
+    color: #ef4444 !important;
+}
+
+.tachyon_node-card__status-dot {
+    width: 5px !important;
+    height: 5px !important;
+    border-radius: 50% !important;
+    background: currentColor !important;
+    display: inline-block !important;
+}
+
+.tachyon_node-card__quota {
+    color: #64748b !important;
+    font-family: ui-monospace, monospace !important;
+}
+
+/* Light Theme overrides for V3 */
+.tachyon_dashboard-page--light .tachyon_top-header,
+.tachyon_dashboard-page--light .tachyon_sidebar,
+.tachyon_dashboard-page--light .tachyon_kpi-card,
+.tachyon_dashboard-page--light .tachyon_traffic-chart-card,
+.tachyon_dashboard-page--light .tachyon_system-health-card,
+.tachyon_dashboard-page--light .tachyon_routes-card,
+.tachyon_dashboard-page--light .tachyon_nodes-section {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.tachyon_dashboard-page--light .tachyon_top-header__title,
+.tachyon_dashboard-page--light .tachyon_top-header__status-text,
+.tachyon_dashboard-page--light .tachyon_dashboard-v3__page-title,
+.tachyon_dashboard-page--light .tachyon_kpi-card__value,
+.tachyon_dashboard-page--light .tachyon_traffic-chart__title,
+.tachyon_dashboard-page--light .tachyon_system-health__title,
+.tachyon_dashboard-page--light .tachyon_system-health__item-name,
+.tachyon_dashboard-page--light .tachyon_routes-table__title,
+.tachyon_dashboard-page--light .tachyon_route-row__name,
+.tachyon_dashboard-page--light .tachyon_nodes-grid__title,
+.tachyon_dashboard-page--light .tachyon_node-card__name {
+    color: #0f172a !important;
+}
+
+.tachyon_dashboard-page--light .tachyon_system-health__item,
+.tachyon_dashboard-page--light .tachyon_route-row,
+.tachyon_dashboard-page--light .tachyon_node-card {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+.tachyon_dashboard-page--light .tachyon_system-health__item:hover,
+.tachyon_dashboard-page--light .tachyon_route-row:hover,
+.tachyon_dashboard-page--light .tachyon_node-card:hover {
+    background: #f1f5f9 !important;
+}
 `;
+
 
