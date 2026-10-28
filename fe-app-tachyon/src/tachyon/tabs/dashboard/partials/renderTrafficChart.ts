@@ -2,7 +2,7 @@
 import { svgEl } from '../../../../helpers';
 import { prettyBytes } from '../../../../helpers/prettyBytes';
 import { tr } from '../../../helpers/i18n';
-import { getTrafficSplinePoints } from '../trafficHistory';
+import { getTrafficSplinePoints, TIMEFRAME_OPTIONS } from '../trafficHistory';
 
 export interface ITrafficChartProps {
   inboundRateBps?: number;
@@ -44,29 +44,15 @@ export function renderTrafficChart(props: ITrafficChartProps = {}): HTMLElement 
   const totalTraffic =
     (props.totalInboundBytes || 0) + (props.totalOutboundBytes || 0);
 
-  // Y-axis labels and positions
-  const yTicks = [
-    { label: '40 GB', y: 25 },
-    { label: '30 GB', y: 65 },
-    { label: '20 GB', y: 105 },
-    { label: '10 GB', y: 145 },
-    { label: '0', y: 185 },
-  ];
+  const calculatedSpline = getTrafficSplinePoints(
+    inRate,
+    outRate,
+    totalTraffic,
+    timeframe,
+  );
+  const yTicks = calculatedSpline.yTicks;
+  const xTicks = calculatedSpline.xTicks;
 
-  // X-axis ticks
-  const xTicks = [
-    '00:00',
-    '03:00',
-    '06:00',
-    '09:00',
-    '12:00',
-    '15:00',
-    '18:00',
-    '21:00',
-    '24:00',
-  ];
-
-  const calculatedSpline = getTrafficSplinePoints(inRate, outRate, totalTraffic);
   const inboundPoints = props.inboundPoints || calculatedSpline.inboundPoints;
   const outboundPoints = props.outboundPoints || calculatedSpline.outboundPoints;
 
@@ -132,6 +118,7 @@ export function renderTrafficChart(props: ITrafficChartProps = {}): HTMLElement 
     yText.textContent = t.label;
     gridElements.push(yText);
   });
+  const yAxisGroup = svgEl('g', { id: 'tachyon-chart-y-axis' }, gridElements);
 
   // X labels
   const xLabelElements: SVGElement[] = [];
@@ -149,6 +136,7 @@ export function renderTrafficChart(props: ITrafficChartProps = {}): HTMLElement 
     xText.textContent = lbl;
     xLabelElements.push(xText);
   });
+  const xAxisGroup = svgEl('g', { id: 'tachyon-chart-x-axis' }, xLabelElements);
 
   // Construct chart SVG
   const chartSvg = svgEl(
@@ -160,8 +148,8 @@ export function renderTrafficChart(props: ITrafficChartProps = {}): HTMLElement 
     },
     [
       defs,
-      ...gridElements,
-      ...xLabelElements,
+      yAxisGroup,
+      xAxisGroup,
       // Filled Areas
       svgEl('path', {
         id: 'tachyon-chart-in-area',
@@ -193,7 +181,113 @@ export function renderTrafficChart(props: ITrafficChartProps = {}): HTMLElement 
     ],
   );
 
-  // Card Header: Title + Legend + Filter
+  // Timeframe Dropdown
+  let activeTimeframe = timeframe;
+  const tfLabelEl = E(
+    'span',
+    { id: 'tachyon-chart-timeframe-label' },
+    activeTimeframe,
+  );
+
+  const dropdownMenuEl = E(
+    'div',
+    {
+      class: 'tachyon_traffic-chart__dropdown-menu',
+      id: 'tachyon-chart-timeframe-menu',
+    },
+    TIMEFRAME_OPTIONS.map((opt) => {
+      const isActive =
+        opt.label === activeTimeframe || opt.id === activeTimeframe;
+      return E(
+        'button',
+        {
+          type: 'button',
+          class: `tachyon_traffic-chart__dropdown-item${
+            isActive ? ' tachyon_traffic-chart__dropdown-item--active' : ''
+          }`,
+          click: (e: MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            activeTimeframe = opt.label;
+            tfLabelEl.textContent = opt.label;
+            dropdownMenuEl.classList.remove(
+              'tachyon_traffic-chart__dropdown-menu--open',
+            );
+            const allItems = dropdownMenuEl.querySelectorAll(
+              '.tachyon_traffic-chart__dropdown-item',
+            );
+            allItems.forEach((btn) =>
+              btn.classList.remove(
+                'tachyon_traffic-chart__dropdown-item--active',
+              ),
+            );
+            (e.currentTarget as HTMLElement).classList.add(
+              'tachyon_traffic-chart__dropdown-item--active',
+            );
+            props.onTimeframeChange?.(opt.id || opt.label);
+          },
+        },
+        [E('span', {}, opt.label)],
+      );
+    }),
+  );
+
+  const dropdownBtnEl = E(
+    'button',
+    {
+      type: 'button',
+      class: 'tachyon_traffic-chart__filter-btn',
+      id: 'tachyon-chart-timeframe-btn',
+      click: (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropdownMenuEl.classList.toggle(
+          'tachyon_traffic-chart__dropdown-menu--open',
+        );
+      },
+    },
+    [
+      tfLabelEl,
+      svgEl(
+        'svg',
+        {
+          width: '12',
+          height: '12',
+          viewBox: '0 0 24 24',
+          fill: 'none',
+          stroke: 'currentColor',
+          'stroke-width': '2',
+        },
+        [svgEl('polyline', { points: '6 9 12 15 18 9' })],
+      ),
+    ],
+  );
+
+  const dropdownWrapEl = E(
+    'div',
+    { class: 'tachyon_traffic-chart__dropdown-wrap' },
+    [dropdownBtnEl, dropdownMenuEl],
+  );
+
+  if (
+    typeof document !== 'undefined' &&
+    typeof document.addEventListener === 'function'
+  ) {
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (
+        dropdownWrapEl &&
+        typeof dropdownWrapEl.contains === 'function' &&
+        !dropdownWrapEl.contains(e.target as Node)
+      ) {
+        dropdownMenuEl.classList.remove(
+          'tachyon_traffic-chart__dropdown-menu--open',
+        );
+      }
+    };
+    document.addEventListener('click', handleDocumentClick);
+  }
+
+  // Card Header: Title + Controls
   const headerEl = E('div', { class: 'tachyon_traffic-chart__header' }, [
     E(
       'span',
@@ -232,33 +326,8 @@ export function renderTrafficChart(props: ITrafficChartProps = {}): HTMLElement 
         E('span', { class: 'tachyon_traffic-chart__dot tachyon_traffic-chart__dot--out' }),
         E('span', { class: 'tachyon_traffic-chart__legend-text' }, tr('Исходящий', 'Outbound')),
       ]),
-      // Timeframe Dropdown
-      E(
-        'button',
-        {
-          type: 'button',
-          class: 'tachyon_traffic-chart__filter-btn',
-          click: (e: MouseEvent) => {
-            e.preventDefault();
-            props.onTimeframeChange?.(timeframe);
-          },
-        },
-        [
-          E('span', {}, timeframe),
-          svgEl(
-            'svg',
-            {
-              width: '12',
-              height: '12',
-              viewBox: '0 0 24 24',
-              fill: 'none',
-              stroke: 'currentColor',
-              'stroke-width': '2',
-            },
-            [svgEl('polyline', { points: '6 9 12 15 18 9' })],
-          ),
-        ],
-      ),
+      // Timeframe Dropdown Wrap
+      dropdownWrapEl,
     ]),
   ]);
 
@@ -274,6 +343,8 @@ export function updateChartSplinePaths(
   outboundPoints: [number, number][],
   inboundRateBps?: number,
   outboundRateBps?: number,
+  yTicks?: { label: string; y: number }[],
+  xTicks?: string[],
 ): void {
   if (typeof document === 'undefined') return;
 
@@ -291,6 +362,30 @@ export function updateChartSplinePaths(
   if (outAreaEl) outAreaEl.setAttribute('d', outAreaPath);
   if (inStrokeEl) inStrokeEl.setAttribute('d', inLinePath);
   if (outStrokeEl) outStrokeEl.setAttribute('d', outLinePath);
+
+  if (yTicks && yTicks.length > 0) {
+    const yGroup = document.getElementById('tachyon-chart-y-axis');
+    if (yGroup) {
+      const textNodes = yGroup.querySelectorAll('text');
+      yTicks.forEach((t, i) => {
+        if (textNodes[i]) {
+          textNodes[i].textContent = t.label;
+        }
+      });
+    }
+  }
+
+  if (xTicks && xTicks.length > 0) {
+    const xGroup = document.getElementById('tachyon-chart-x-axis');
+    if (xGroup) {
+      const textNodes = xGroup.querySelectorAll('text');
+      xTicks.forEach((lbl, i) => {
+        if (textNodes[i]) {
+          textNodes[i].textContent = lbl;
+        }
+      });
+    }
+  }
 
   if (
     typeof inboundRateBps === 'number' ||

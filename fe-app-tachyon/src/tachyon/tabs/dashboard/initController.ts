@@ -173,6 +173,8 @@ const activeRegionFilters = new Map<string, string>();
 const singleTestingOutboundCodes: Record<string, boolean> = {};
 let isTestingAllSections = false;
 let activeSectionTabCode = '';
+let selectedTrafficTimeframe = '24 часа';
+let isNodesGridExpanded = false;
 
 let dashboardVisibilityPaused = false;
 
@@ -662,8 +664,16 @@ async function connectToClashSockets(dataUpdatesId: number) {
         parsedMsg.down,
         parsedMsg.up,
         totalDown + totalUp,
+        selectedTrafficTimeframe,
       );
-      updateChartSplinePaths(spline.inboundPoints, spline.outboundPoints);
+      updateChartSplinePaths(
+        spline.inboundPoints,
+        spline.outboundPoints,
+        parsedMsg.down,
+        parsedMsg.up,
+        spline.yTicks,
+        spline.xTicks,
+      );
 
       store.set({
         bandwidthWidget: {
@@ -2919,8 +2929,16 @@ async function fetchConnections() {
           rates.down,
           rates.up,
           downloadTotal + uploadTotal,
+          selectedTrafficTimeframe,
         );
-        updateChartSplinePaths(spline.inboundPoints, spline.outboundPoints);
+        updateChartSplinePaths(
+          spline.inboundPoints,
+          spline.outboundPoints,
+          rates.down,
+          rates.up,
+          spline.yTicks,
+          spline.xTicks,
+        );
 
         store.set({
           bandwidthWidget: {
@@ -4097,10 +4115,10 @@ export function computeNodeQuotaText(
 
   const nodeBytes = getNodeTrafficBytes(outboundCode, outboundName, rawConns);
   if (nodeBytes > 0) {
-    return `${prettyBytes(nodeBytes)} ${tr('прокачано', 'used')}`;
+    return `${prettyBytes(nodeBytes)} / ∞`;
   }
 
-  return tr('Безлимит', 'Unlimited');
+  return '0 B / ∞';
 }
 
 export function renderHeroAndKpiWidgets() {
@@ -4361,7 +4379,12 @@ export function renderHeroAndKpiWidgets() {
     const curUp = bwState.data?.up || 0;
     const total24h =
       (totalState.data?.downloadTotal || 0) + (totalState.data?.uploadTotal || 0);
-    const splineCoords = getTrafficSplinePoints(curDown, curUp, total24h);
+    const splineCoords = getTrafficSplinePoints(
+      curDown,
+      curUp,
+      total24h,
+      selectedTrafficTimeframe,
+    );
 
     if (!chartContainer.hasChildNodes()) {
       const chartEl = renderTrafficChart({
@@ -4371,11 +4394,23 @@ export function renderHeroAndKpiWidgets() {
         totalOutboundBytes: totalState.data?.uploadTotal || 0,
         inboundPoints: splineCoords.inboundPoints,
         outboundPoints: splineCoords.outboundPoints,
-        timeframe: '24 часа',
+        timeframe: selectedTrafficTimeframe,
         onTimeframeChange: (tf) => {
-          showToast(
-            tr(`Интервал графика: ${tf}`, `Chart timeframe: ${tf}`),
-            'success',
+          selectedTrafficTimeframe = tf;
+          const updatedSpline = getTrafficSplinePoints(
+            store.get().bandwidthWidget.data?.down || 0,
+            store.get().bandwidthWidget.data?.up || 0,
+            (store.get().trafficTotalWidget.data?.downloadTotal || 0) +
+              (store.get().trafficTotalWidget.data?.uploadTotal || 0),
+            selectedTrafficTimeframe,
+          );
+          updateChartSplinePaths(
+            updatedSpline.inboundPoints,
+            updatedSpline.outboundPoints,
+            store.get().bandwidthWidget.data?.down || 0,
+            store.get().bandwidthWidget.data?.up || 0,
+            updatedSpline.yTicks,
+            updatedSpline.xTicks,
           );
         },
       });
@@ -4386,6 +4421,8 @@ export function renderHeroAndKpiWidgets() {
         splineCoords.outboundPoints,
         curDown,
         curUp,
+        splineCoords.yTicks,
+        splineCoords.xTicks,
       );
     }
   }
@@ -4687,13 +4724,21 @@ export function renderHeroAndKpiWidgets() {
     'dashboard-nodes-grid-wrap',
   );
   if (nodesGridContainer) {
-    const allOutbounds: Tachyon.Outbound[] = [];
+    const allOutbounds: Array<{
+      outbound: Tachyon.Outbound;
+      sectionName: string;
+      selectorCode: string;
+    }> = [];
     const seenTags = new Set<string>();
     for (const s of sectionsWithCustomLatencies) {
       for (const o of s.outbounds || []) {
         if (!seenTags.has(o.code) && o.type !== 'direct' && o.type !== 'reject') {
           seenTags.add(o.code);
-          allOutbounds.push(o);
+          allOutbounds.push({
+            outbound: o,
+            sectionName: s.sectionName,
+            selectorCode: s.code,
+          });
         }
       }
     }
@@ -4703,51 +4748,56 @@ export function renderHeroAndKpiWidgets() {
         id: 'node-ee',
         name: 'Эстония (Без рекламы)',
         flag: '🇪🇪',
-        tagBadge: 'Clouds',
+        tagBadge: 'VLESS',
+        tagBadgeType: 'protocol',
         protocol: 'VLESS (TCP)',
         latencyMs: 49,
         statusText: tr('Работает', 'Active'),
         isOnline: true,
-        quotaUsedText: `1.2 GB ${tr('прокачано', 'used')}`,
+        quotaUsedText: '1.2 GB / 10 GB',
       },
       {
         id: 'node-de',
         name: 'Германия (MEGA)',
         flag: '🇩🇪',
-        tagBadge: 'Clouds',
+        tagBadge: 'VLESS',
+        tagBadgeType: 'protocol',
         protocol: 'VLESS (TCP)',
         latencyMs: 51,
         statusText: tr('Работает', 'Active'),
         isOnline: true,
-        quotaUsedText: `2.8 GB ${tr('прокачано', 'used')}`,
+        quotaUsedText: '2.8 GB / 10 GB',
       },
       {
         id: 'node-nl',
         name: 'Нидерланды',
         flag: '🇳🇱',
-        tagBadge: 'Clouds',
-        protocol: 'VLESS (TCP)',
+        tagBadge: 'URLTEST',
+        tagBadgeType: 'urltest',
+        protocol: 'URLTEST',
         latencyMs: 57,
         statusText: tr('Работает', 'Active'),
         isOnline: true,
-        quotaUsedText: `1.4 GB ${tr('прокачано', 'used')}`,
+        quotaUsedText: '1.4 GB / ∞',
       },
       {
         id: 'node-se',
         name: 'Швеция (Игровая)',
         flag: '🇸🇪',
-        tagBadge: 'Clouds',
+        tagBadge: 'PRIORITY',
+        tagBadgeType: 'priority',
         protocol: 'Hysteria2',
         latencyMs: 64,
         statusText: tr('Работает', 'Active'),
         isOnline: true,
-        quotaUsedText: tr('Безлимит', 'Unlimited'),
+        quotaUsedText: '0.8 GB / ∞',
       },
     ];
 
     let finalNodes: INodeGridCardItem[] = [];
     if (allOutbounds.length > 0) {
-      finalNodes = allOutbounds.slice(0, 4).map((o, idx) => {
+      finalNodes = allOutbounds.map((item, idx) => {
+        const o = item.outbound;
         const cInfo = detectOutboundCountry({
           displayName: o.displayName || o.code,
         });
@@ -4762,18 +4812,52 @@ export function renderHeroAndKpiWidgets() {
           sectionsWithCustomLatencies,
           lastRawConnections,
         );
+
+        let tagBadge = '';
+        let tagBadgeType: 'urltest' | 'priority' | 'protocol' = 'protocol';
+        const lowerName = cleanName.toLowerCase();
+        const lowerType = (o.type || '').toLowerCase();
+
+        if (
+          lowerType === 'urltest' ||
+          lowerName.includes('fastest') ||
+          lowerName.includes('urltest') ||
+          Boolean((o as any).urlTestInfo)
+        ) {
+          tagBadge = 'URLTEST';
+          tagBadgeType = 'urltest';
+        } else if (
+          lowerType === 'fallback' ||
+          lowerName.includes('priority') ||
+          lowerName.includes('приоритет') ||
+          Boolean((o as any).priorityInfo)
+        ) {
+          tagBadge = 'PRIORITY';
+          tagBadgeType = 'priority';
+        } else if (o.type) {
+          tagBadge = o.type.toUpperCase();
+          tagBadgeType = 'protocol';
+        }
+
         return {
           id: o.code,
           name: cleanName,
           flag: cInfo?.flag || '🌐',
-          tagBadge: 'Clouds',
+          tagBadge,
+          tagBadgeType,
           protocol: o.type ? o.type.toUpperCase() : 'VLESS',
           latencyMs: nodePing,
           statusText: tr('Работает', 'Active'),
           isOnline: true,
+          isSelected: Boolean(o.selected),
           quotaUsedText: quotaText,
           onClick: () => {
-            void handleTestLatency('proxy', 'main', o.code);
+            void handleChooseOutbound(item.sectionName, item.selectorCode, o.code);
+            void handleTestLatency(
+              o.type === 'urltest' || o.type === 'fallback' ? 'group' : 'proxy',
+              item.sectionName,
+              o.code,
+            );
           },
         };
       });
@@ -4783,6 +4867,11 @@ export function renderHeroAndKpiWidgets() {
 
     const nodesGridEl = renderNodesGrid({
       nodes: finalNodes,
+      isExpanded: isNodesGridExpanded,
+      onToggleExpand: () => {
+        isNodesGridExpanded = !isNodesGridExpanded;
+        renderHeroAndKpiWidgets();
+      },
       isTestingAll: isTestingAllSections,
       onTestAllNodesClick: () => {
         void handleTestAllSections();

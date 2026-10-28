@@ -184,7 +184,7 @@ describe('V3 Dashboard Components (Target Screenshot Design)', () => {
   });
 
   describe('renderNodesGrid', () => {
-    it('renders 4 nodes grid (Estonia, Germany, Netherlands, Sweden) with Clouds tag', () => {
+    it('renders 4 nodes grid (Estonia, Germany, Netherlands, Sweden) with protocol badges', () => {
       const onTest = vi.fn();
       const el = renderNodesGrid({
         isTestingAll: false,
@@ -194,6 +194,43 @@ describe('V3 Dashboard Components (Target Screenshot Design)', () => {
       expect(el).toBeDefined();
       expect(el.getAttribute('class')).toContain('tachyon_nodes-section');
       expect(el.getAttribute('data-card')).toBe('nodes-grid');
+    });
+
+    it('renders expand button when more than 4 nodes are provided and collapsed', () => {
+      const nodes = Array.from({ length: 6 }, (_, i) => ({
+        id: `node-${i}`,
+        name: `Server ${i}`,
+        protocol: 'VLESS',
+        latencyMs: 50,
+      }));
+
+      const onToggleExpand = vi.fn();
+      const el = renderNodesGrid({
+        nodes,
+        isExpanded: false,
+        onToggleExpand,
+      });
+
+      const bodyEl = el.children[1] as any;
+      expect(bodyEl.children.length).toBe(4);
+      expect(el.children.length).toBe(3); // header, body, expand-wrap
+    });
+
+    it('renders all nodes when isExpanded is true', () => {
+      const nodes = Array.from({ length: 6 }, (_, i) => ({
+        id: `node-${i}`,
+        name: `Server ${i}`,
+        protocol: 'VLESS',
+        latencyMs: 50,
+      }));
+
+      const el = renderNodesGrid({
+        nodes,
+        isExpanded: true,
+      });
+
+      const bodyEl = el.children[1] as any;
+      expect(bodyEl.children.length).toBe(6);
     });
   });
 });

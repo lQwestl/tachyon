@@ -4837,19 +4837,28 @@ body.dark-theme .tachyon_proto-popover__desc {
 .tachyon_traffic-chart__live-badge {
     display: inline-flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 6px !important;
-    padding: 3px 9px !important;
+    width: 175px !important;
+    min-width: 175px !important;
+    max-width: 175px !important;
+    box-sizing: border-box !important;
+    padding: 3px 6px !important;
     background: rgba(15, 23, 42, 0.7) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 6px !important;
-    font-family: ui-monospace, monospace !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-variant-numeric: tabular-nums !important;
     font-size: 11px !important;
     font-weight: 500 !important;
     line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
 }
 
 .tachyon_traffic-chart__live-in {
     color: #00d2ff !important;
+    font-variant-numeric: tabular-nums !important;
 }
 
 .tachyon_traffic-chart__live-sep {
@@ -4858,6 +4867,60 @@ body.dark-theme .tachyon_proto-popover__desc {
 
 .tachyon_traffic-chart__live-out {
     color: #10b981 !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+.tachyon_traffic-chart__dropdown-wrap {
+    position: relative !important;
+    display: inline-block !important;
+}
+
+.tachyon_traffic-chart__dropdown-menu {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    right: 0 !important;
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+    padding: 4px !important;
+    min-width: 125px !important;
+    z-index: 50 !important;
+    display: none;
+    flex-direction: column !important;
+    gap: 2px !important;
+}
+
+.tachyon_traffic-chart__dropdown-menu--open {
+    display: flex !important;
+}
+
+.tachyon_traffic-chart__dropdown-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 6px 10px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 5px !important;
+    color: #94a3b8 !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    transition: all 0.15s ease !important;
+}
+
+.tachyon_traffic-chart__dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+}
+
+.tachyon_traffic-chart__dropdown-item--active {
+    background: rgba(0, 210, 255, 0.12) !important;
+    color: #00d2ff !important;
+    font-weight: 600 !important;
 }
 
 .tachyon_traffic-chart__filter-btn {
@@ -4946,16 +5009,15 @@ body.dark-theme .tachyon_proto-popover__desc {
 .tachyon_system-health__body {
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
-    justify-content: space-between !important;
-    flex: 1 !important;
+    gap: 10px !important;
+    justify-content: flex-start !important;
 }
 
 .tachyon_system-health__item {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    padding: 10px 12px !important;
+    padding: 12px 14px !important;
     background: rgba(255, 255, 255, 0.03) !important;
     border: 1px solid rgba(255, 255, 255, 0.05) !important;
     border-radius: 8px !important;
@@ -5382,6 +5444,12 @@ body.dark-theme .tachyon_proto-popover__desc {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
 }
 
+.tachyon_node-card--selected {
+    border-color: rgba(56, 189, 248, 0.6) !important;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.2) !important;
+    background: rgba(56, 189, 248, 0.08) !important;
+}
+
 .tachyon_node-card__top {
     display: flex !important;
     justify-content: space-between !important;
@@ -5417,10 +5485,27 @@ body.dark-theme .tachyon_proto-popover__desc {
     font-weight: 600 !important;
     padding: 2px 6px !important;
     border-radius: 4px !important;
-    background: rgba(56, 189, 248, 0.12) !important;
-    color: #38bdf8 !important;
-    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
     flex-shrink: 0 !important;
+}
+
+.tachyon_node-card__tag-badge--urltest {
+    background: rgba(0, 210, 255, 0.15) !important;
+    color: #00d2ff !important;
+    border: 1px solid rgba(0, 210, 255, 0.3) !important;
+}
+
+.tachyon_node-card__tag-badge--priority {
+    background: rgba(168, 85, 247, 0.15) !important;
+    color: #c084fc !important;
+    border: 1px solid rgba(168, 85, 247, 0.3) !important;
+}
+
+.tachyon_node-card__tag-badge--protocol {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #94a3b8 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .tachyon_node-card__middle {
@@ -5487,6 +5572,34 @@ body.dark-theme .tachyon_proto-popover__desc {
 .tachyon_node-card__quota {
     color: #64748b !important;
     font-family: ui-monospace, monospace !important;
+}
+
+.tachyon_nodes-grid__expand-wrap {
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 14px !important;
+    width: 100% !important;
+}
+
+.tachyon_nodes-grid__expand-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 18px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    color: #94a3b8 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.tachyon_nodes-grid__expand-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #f8fafc !important;
 }
 
 /* Light Theme overrides for V3 */

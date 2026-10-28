@@ -167,7 +167,7 @@ describe('trafficHistory & telemetry sync', () => {
       expect(quota).toContain('GB');
     });
 
-    it('returns real traffic прокачано / used when router connections passed through this node', () => {
+    it('returns real traffic X / ∞ when router connections passed through this node', () => {
       const sections = [
         {
           outbounds: [{ code: 'node-nl', displayName: 'Нидерланды' } as any],
@@ -182,10 +182,10 @@ describe('trafficHistory & telemetry sync', () => {
       ];
 
       const quota = computeNodeQuotaText('node-nl', 'Нидерланды', sections, rawConns);
-      expect(quota.includes('прокачано') || quota.includes('used')).toBe(true);
+      expect(quota).toContain('/ ∞');
     });
 
-    it('returns Безлимит / Unlimited when no subscription quota and zero connection traffic', () => {
+    it('returns 0 B / ∞ when no subscription quota and zero connection traffic', () => {
       const sections = [
         {
           outbounds: [{ code: 'node-se', displayName: 'Швеция' } as any],
@@ -193,7 +193,7 @@ describe('trafficHistory & telemetry sync', () => {
       ];
 
       const quota = computeNodeQuotaText('node-se', 'Швеция', sections, []);
-      expect(quota === 'Безлимит' || quota === 'Unlimited').toBe(true);
+      expect(quota).toBe('0 B / ∞');
     });
   });
 });

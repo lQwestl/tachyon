@@ -11,16 +11,20 @@ export interface INodeGridCardItem {
   name: string;
   flag?: string;
   tagBadge?: string;
+  tagBadgeType?: 'urltest' | 'priority' | 'protocol' | string;
   protocol: string;
   latencyMs: number;
   statusText?: string;
   isOnline?: boolean;
+  isSelected?: boolean;
   quotaUsedText?: string;
   onClick?: () => void;
 }
 
 export interface INodesGridProps {
   nodes?: INodeGridCardItem[];
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
   isTestingAll?: boolean;
   onTestAllNodesClick?: () => void;
   onTitleClick?: () => void;
@@ -28,6 +32,8 @@ export interface INodesGridProps {
 
 export function renderNodesGrid({
   nodes,
+  isExpanded = false,
+  onToggleExpand,
   isTestingAll = false,
   onTestAllNodesClick,
   onTitleClick,
@@ -37,7 +43,8 @@ export function renderNodesGrid({
       id: 'node-ee',
       name: 'Эстония (Без рекламы)',
       flag: '🇪🇪',
-      tagBadge: 'Clouds',
+      tagBadge: 'VLESS',
+      tagBadgeType: 'protocol',
       protocol: 'VLESS (TCP)',
       latencyMs: 49,
       statusText: tr('Работает', 'Active'),
@@ -48,7 +55,8 @@ export function renderNodesGrid({
       id: 'node-de',
       name: 'Германия (MEGA)',
       flag: '🇩🇪',
-      tagBadge: 'Clouds',
+      tagBadge: 'VLESS',
+      tagBadgeType: 'protocol',
       protocol: 'VLESS (TCP)',
       latencyMs: 51,
       statusText: tr('Работает', 'Active'),
@@ -59,27 +67,31 @@ export function renderNodesGrid({
       id: 'node-nl',
       name: 'Нидерланды',
       flag: '🇳🇱',
-      tagBadge: 'Clouds',
-      protocol: 'VLESS (TCP)',
+      tagBadge: 'URLTEST',
+      tagBadgeType: 'urltest',
+      protocol: 'URLTEST',
       latencyMs: 57,
       statusText: tr('Работает', 'Active'),
       isOnline: true,
-      quotaUsedText: '1.4 GB / 10 GB',
+      quotaUsedText: '1.4 GB / ∞',
     },
     {
       id: 'node-se',
       name: 'Швеция (Игровая)',
       flag: '🇸🇪',
-      tagBadge: 'Clouds',
+      tagBadge: 'PRIORITY',
+      tagBadgeType: 'priority',
       protocol: 'Hysteria2',
       latencyMs: 64,
       statusText: tr('Работает', 'Active'),
       isOnline: true,
-      quotaUsedText: '0.8 GB / 10 GB',
+      quotaUsedText: '0.8 GB / ∞',
     },
   ];
 
   const nodeList = nodes && nodes.length > 0 ? nodes : defaultNodes;
+  const visibleNodes =
+    !isExpanded && nodeList.length > 4 ? nodeList.slice(0, 4) : nodeList;
 
   // Header: Title + Button "🔄 Проверить все узлы"
   const headerEl = E('div', { class: 'tachyon_nodes-grid__header' }, [
@@ -124,14 +136,18 @@ export function renderNodesGrid({
     ),
   ]);
 
-  // 4 Cards Grid
-  const cardElements = nodeList.map((node) => {
+  // Cards Grid
+  const cardElements = visibleNodes.map((node) => {
     const flagNode = node.flag ? renderFlagEmojis(node.flag) : '';
+    const badgeTypeClass = node.tagBadgeType
+      ? ` tachyon_node-card__tag-badge--${node.tagBadgeType}`
+      : ' tachyon_node-card__tag-badge--protocol';
+    const selectedClass = node.isSelected ? ' tachyon_node-card--selected' : '';
 
     return E(
       'div',
       {
-        class: 'tachyon_node-card',
+        class: `tachyon_node-card${selectedClass}`,
         'data-node': node.id,
         click: (e: MouseEvent) => {
           if (node.onClick) {
@@ -148,7 +164,11 @@ export function renderNodesGrid({
             E('span', { class: 'tachyon_node-card__name', title: node.name }, node.name),
           ]),
           node.tagBadge
-            ? E('span', { class: 'tachyon_node-card__tag-badge' }, node.tagBadge)
+            ? E(
+                'span',
+                { class: `tachyon_node-card__tag-badge${badgeTypeClass}` },
+                node.tagBadge,
+              )
             : '',
         ]),
 
@@ -196,9 +216,45 @@ export function renderNodesGrid({
     );
   });
 
+  const children: HTMLElement[] = [
+    headerEl,
+    E('div', { class: 'tachyon_nodes-grid__body' }, cardElements),
+  ];
+
+  if (nodeList.length > 4) {
+    const remainingCount = nodeList.length - 4;
+    const expandBtnEl = E(
+      'div',
+      { class: 'tachyon_nodes-grid__expand-wrap' },
+      [
+        E(
+          'button',
+          {
+            type: 'button',
+            class: 'tachyon_nodes-grid__expand-btn',
+            click: (e: MouseEvent) => {
+              e.preventDefault();
+              onToggleExpand?.();
+            },
+          },
+          [
+            E(
+              'span',
+              {},
+              isExpanded
+                ? tr('Свернуть ▴', 'Collapse ▴')
+                : `${tr('Развернуть', 'Expand')} (+${remainingCount}) ▾`,
+            ),
+          ],
+        ),
+      ],
+    );
+    children.push(expandBtnEl);
+  }
+
   return E(
     'div',
     { class: 'tachyon_nodes-section', 'data-card': 'nodes-grid' } as any,
-    [headerEl, E('div', { class: 'tachyon_nodes-grid__body' }, cardElements)],
+    children,
   );
 }
