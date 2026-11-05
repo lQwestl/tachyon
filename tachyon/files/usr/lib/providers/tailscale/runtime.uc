@@ -398,15 +398,21 @@ function configure_firewall(section) {
 
 function configure_dnsmasq_localservice() {
     let changed = false;
-    let index = 0;
-    while (uci_core.get("dhcp", index, ".type") != null) {
-        if (uci_core.get("dhcp", index, ".type") == "dnsmasq") {
-            if (as_string(uci_core.get("dhcp", index, "localservice")) != "0") {
-                uci_core.set("dhcp." + index + ".localservice", "0");
+    let sections = uci_core.sections("dhcp", "dnsmasq");
+    if (type(sections) == "array" && length(sections) > 0) {
+        for (let s in sections) {
+            let sname = type(s) == "object" ? as_string(s[".name"] || "") : as_string(s);
+            let val = type(s) == "object" ? as_string(s.localservice) : as_string(uci_core.get("dhcp", sname, "localservice"));
+            if (sname != "" && val != "0") {
+                uci_core.set("dhcp." + sname + ".localservice", "0");
                 changed = true;
             }
         }
-        index++;
+    } else if (uci_core.get("dhcp", "@dnsmasq[0]", ".type") == "dnsmasq") {
+        if (as_string(uci_core.get("dhcp", "@dnsmasq[0]", "localservice")) != "0") {
+            uci_core.set("dhcp.@dnsmasq[0].localservice", "0");
+            changed = true;
+        }
     }
     if (changed)
         uci_core.commit("dhcp");
